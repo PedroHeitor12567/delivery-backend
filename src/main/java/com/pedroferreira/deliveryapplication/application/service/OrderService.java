@@ -23,8 +23,6 @@ public class OrderService {
     private final CustomerRepository customerRepository;
     private final StoreRepository storeRepository;
     private final ProductRepository productRepository;
-    private final ItemOrderRepository itemOrderRepository;
-
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request) {
         Customer customer = customerRepository.findById(request.getCustomerId())
