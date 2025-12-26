@@ -61,7 +61,7 @@ public class Store {
     private LocalTime openingTime;
 
     @Column(name = "closing_time")
-    private LocalTime ClosingTime;
+    private LocalTime closingTime;
 
     @Column(name = "delivery_fee", precision = 10, scale = 2)
     private BigDecimal deliveryFee;
