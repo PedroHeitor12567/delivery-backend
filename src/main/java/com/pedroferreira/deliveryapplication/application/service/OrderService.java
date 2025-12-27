@@ -39,11 +39,14 @@ public class OrderService {
             throw new IllegalStateException("Loja está fechada no momento");
         }
 
+        BigDecimal deliveryFee = store.calculateDeliveryFee(request.getDeliveyDistanceKm());
+
         Order order = Order.builder()
                 .customer(customer)
                 .store(store)
                 .deliveryAddress(request.getDeliveryAddress())
-                .deliveryFee(store.getDeliveryFee())
+                .deliveryDistanceKm(BigDecimal.valueOf(request.getDeliveyDistanceKm()))
+                .deliveryFee(deliveryFee)
                 .discount(BigDecimal.ZERO)
                 .observations(request.getObservations())
                 .build();

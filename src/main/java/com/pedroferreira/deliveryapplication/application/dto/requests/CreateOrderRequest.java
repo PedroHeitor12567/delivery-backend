@@ -1,5 +1,6 @@
 package com.pedroferreira.deliveryapplication.application.dto.requests;
 
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -24,6 +25,10 @@ public class CreateOrderRequest {
 
     @NotBlank(message = "Endereço de entrega é obrigatório")
     private String deliveryAddress;
+
+    @NotNull(message = "Distância de entrega é obrigatória")
+    @DecimalMin(value = "0.1", message = "Distância mínima é 0.1km")
+    private Double deliveyDistanceKm;
 
     @NotEmpty(message = "Pedido deve conter ao menos um item")
     private List<ItemOrderDTO> items;

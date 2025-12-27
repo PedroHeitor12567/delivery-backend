@@ -16,6 +16,8 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
 
     Optional<Customer> findByUsername(String username);
 
+    Optional<Customer> findByOauthProviderAndOauthId(String provider, String oauthId);
+
     boolean existsByEmail(String email);
 
     boolean existsByCpf(String cpf);

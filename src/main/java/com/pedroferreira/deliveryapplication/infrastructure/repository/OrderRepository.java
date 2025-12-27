@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
@@ -21,6 +22,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByCustomerIdAndStatus(Long customerId, StatusOrder status);
 
     List<Order> findByStoreIdAndStatus(Long storeId, StatusOrder status);
+
+    List<Order> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
+
+    Long countByCreatedAtAfter(LocalDateTime date);
 
     @Query("SELECT o FROM Order o WHERE o.store.id = :storeId " + "and o.status IN :statuses ORDER BY o.createdAt DESC")
     List<Order> findByStoreIdAndStatusIn(@Param("storeId") Long storeId, @Param("statuses") List<StatusOrder> statuses);

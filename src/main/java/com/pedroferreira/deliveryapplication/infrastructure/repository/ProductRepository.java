@@ -17,6 +17,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     List<Product> findByStoreIdAndActiveTrue(Long storeId);
 
+    Long countByAvailableTrue();
+
     @Query("SELECT p FROM Product p WHERE p.store.id = :storeId " + "AND p.available = true AND p.active = true")
     List<Product> findAvailableProductsByStore(@Param("storeId") Long storeId);
 }

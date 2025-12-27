@@ -46,8 +46,11 @@ public class Order {
     @Column(name = "delivery_address", nullable = false)
     private String deliveryAddress;
 
+    @Column(name = "delivery_distance_km", precision = 5, scale = 2)
+    private BigDecimal deliveryDistanceKm;
+
     @Column(name = "delivery_fee", precision = 10, scale = 2)
-    private BigDecimal deliveryFee;
+    BigDecimal deliveryFee;
 
     @Column(precision = 10, scale = 2)
     private BigDecimal discount = BigDecimal.ZERO;
@@ -135,6 +138,12 @@ public class Order {
         this.totalAmount = itemsTotal
                 .add(deliveryFee != null ? deliveryFee : BigDecimal.ZERO)
                 .subtract(discount);
+    }
+
+    public void setDeliveryDistance(Double distanceKm) {
+        this.deliveryDistanceKm = BigDecimal.valueOf(distanceKm);
+        this.deliveryFee = store.calculateDeliveryFee(distanceKm);
+        recalculateTotal();
     }
 
     public void validate() {

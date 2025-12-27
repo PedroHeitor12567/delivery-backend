@@ -63,11 +63,18 @@ public class Store {
     @Column(name = "closing_time")
     private LocalTime closingTime;
 
-    @Column(name = "delivery_fee", precision = 10, scale = 2)
-    private BigDecimal deliveryFee;
+    @Column(name = "delivery_fee_per_km", precision = 10, scale = 2)
+    private BigDecimal deliveryFeePerKm;
+
+    @Column(name = "base_delivery_fee", precision = 10, scale = 2)
+    private BigDecimal baseDeliveryFee;
 
     @Column(name = "minimum_order", precision = 10, scale = 2)
     private BigDecimal minimumOrder;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by_admin_id")
+    private Admin createdBy;
 
     @Column(nullable = false)
     @Builder.Default
@@ -134,5 +141,18 @@ public class Store {
     public void deactivate() {
         this.active = false;
         this.open = false;
+    }
+
+    public BigDecimal calculateDeliveryFee(Double distanceKm) {
+        if (distanceKm == null || distanceKm <= 0) {
+            throw new IllegalArgumentException("Distância inválida");
+        }
+
+        BigDecimal distanceFee = deliveryFeePerKm
+                .multiply(BigDecimal.valueOf(distanceKm));
+
+        BigDecimal totalFee = baseDeliveryFee.add(distanceFee);
+
+        return totalFee.setScale(2, RoundingMode.HALF_UP);
     }
 }

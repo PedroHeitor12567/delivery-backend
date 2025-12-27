@@ -42,11 +42,17 @@ public abstract class User {
     @Column(nullable = false)
     private UserRole role;
 
+    @Column(name = "oauth_provider")
+    private String oauthProvider;
+
+    @Column(name = "oauth_id")
+    private String oauthId;
+
     protected User() {
 
     }
 
-    protected User(Long id, String username, String email, String password, String cpf, String phone, String address) {
+    protected User(Long id, String username, String email, String password, String cpf, String phone, String address, UserRole role) {
         this.id = id;
         this.username = username;
         this.email = email;

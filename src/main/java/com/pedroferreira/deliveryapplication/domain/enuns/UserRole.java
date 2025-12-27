@@ -4,6 +4,7 @@ public enum UserRole {
 
     CUSTOMER,
     SELLER,
+    ADMIN,
     SYSTEM;
 
     public boolean canStartOrder(){
@@ -12,6 +13,10 @@ public enum UserRole {
 
     public boolean canOperateOrder(){
         return this == SELLER;
+    }
+
+    public boolean isAdmin(){
+        return this == ADMIN;
     }
 
     public boolean ehSystem(){

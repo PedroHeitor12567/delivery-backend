@@ -1,5 +1,6 @@
 package com.pedroferreira.deliveryapplication.application.dto.requests;
 
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -40,8 +41,13 @@ public class CreateStoreRequest {
     @NotBlank(message = "Categoria é obrigatória")
     private String category;
 
+    @NotNull(message = "Taxa de entrega por KM é obrigatória")
+    @DecimalMin(value = "0.0", message = "Taxa por KM deve ser maior ou igual a zero")
+    private BigDecimal deliveryFeePerKm;
+
     @NotNull(message = "Taxa de entrega é obrigatória")
-    private BigDecimal deliveryFee;
+    @DecimalMin(value = "0.0", message = "Taxa base deve ser maior ou igual a zero")
+    private BigDecimal baseDeliveryFee;
 
     @NotNull(message = "Pedido mínimo é obrigatório")
     private BigDecimal minimumOrder;
