@@ -1,27 +1,21 @@
 package com.pedroferreira.deliveryapplication.domain.entity;
 
 import com.pedroferreira.deliveryapplication.domain.enuns.UserRole;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.Table;
 import lombok.*;
 
-@Entity
-@Table(name = "sellers")
 @Getter
 @Setter
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class Seller extends User {
 
-    @OneToOne
-    @JoinColumn(name = "store_id", unique = true)
     private Store store;
 
     @Builder
-    public Seller(Long id, String username, String email, String password, String cpf, String phone, String adress, Store store) {
-        super(id, username, email, password, cpf, phone, adress);
+    public Seller(Long id, String username, String email, String password, String cpf, String phone, String address, Store store) {
+        super(username, email, password, cpf, phone, address, UserRole.SELLER);
+        this.setId(id);
         this.store = store;
     }
 
@@ -35,9 +29,9 @@ public class Seller extends User {
         order.confirm();
     }
 
-    public void refuseOrder(Order order) {
+    public void refuseOrder(Order order, String reason) {
         validateOrderBelongsToStore(order);
-        order.refuse();
+        order.refuse(reason);
     }
 
     public void markOrderReady(Order order) {
@@ -48,6 +42,12 @@ public class Seller extends User {
     private void validateOrderBelongsToStore(Order order) {
         if (!order.getStore().equals(this.store)) {
             throw new IllegalStateException("Pedido não pertence a esta loja");
+        }
+        if (store == null) {
+            throw new IllegalStateException("Vendendor não possui loja associada");
+        }
+        if (order == null || order.getStore() == null) {
+            throw new IllegalArgumentException("Pedido inválido");
         }
     }
 }

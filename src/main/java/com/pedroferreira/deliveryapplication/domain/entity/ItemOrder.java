@@ -1,12 +1,9 @@
 package com.pedroferreira.deliveryapplication.domain.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
 
-@Entity
-@Table(name = "order_items")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -15,46 +12,56 @@ import java.math.BigDecimal;
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class ItemOrder {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Long id;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false)
     private Order order;
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "product_id", nullable = false)
     private Product product;
-
-    @Column(nullable = false)
     private Integer quantity;
-
-    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPrice;
-
-    @Column(precision = 10, scale = 2)
     private BigDecimal discount = BigDecimal.ZERO;
-
-    @Column(columnDefinition = "TEXT")
     private String observations;
 
+    public ItemOrder(Product product, Integer quantity, BigDecimal unitPrice, String observations) {
+        validateConstructorParams(product, quantity, unitPrice);
+        this.product = product;
+        this.quantity = quantity;
+        this.unitPrice = unitPrice;
+        this.observations = observations;
+        this.discount = BigDecimal.ZERO;
+    }
+
     public BigDecimal getSubtotal() {
-        return unitPrice
-                .multiply(BigDecimal.valueOf(quantity))
-                .subtract(discount);
+        BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        if (discount != null) {
+            subtotal = subtotal.subtract(discount);
+        }
+        return subtotal;
     }
 
     public void validate() {
-        if (quantity <= 0) {
+        if (quantity == null || quantity <= 0) {
             throw new IllegalArgumentException("Quantidade deve ser maior que zero");
         }
-        if (unitPrice.compareTo(BigDecimal.ZERO) <= 0) {
+        if (unitPrice == null || unitPrice.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Preço unitário deve ser maior que zero");
         }
-        if (!product.getAvailable()) {
-            throw new IllegalArgumentException("Produto não está disponível");
+        if (product == null) {
+            throw new IllegalStateException("Produto não pode ser nulo");
+        }
+        if (!Boolean.TRUE.equals(product.getAvailable())) {
+            throw new IllegalStateException("Produto não está disponível: " + product.getName());
+        }
+    }
+
+    private void validateConstructorParams(Product product, Integer quantity, BigDecimal unitPrice) {
+        if (product == null) {
+            throw new IllegalArgumentException("Produto não pode ser nulo");
+        }
+        if (quantity == null || quantity <= 0) {
+            throw new IllegalArgumentException("Quantidade deve ser maior que zero");
+        }
+        if (unitPrice == null || unitPrice.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Preço unitário deve ser maior do que zero");
         }
     }
 }

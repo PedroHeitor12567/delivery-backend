@@ -1,50 +1,37 @@
 package com.pedroferreira.deliveryapplication.domain.entity;
 
-import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
 
-@Entity
-@Table(name="products")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(exclude = "store")
 public class Product {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
     private Long id;
-
-    @Column(nullable = false)
     private String name;
-
-    @Column(nullable = false)
     private String description;
-
-    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
-
-    @Column(name = "image_url")
     private String imageUrl;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "store_id", nullable = false)
     private Store store;
-
-    @Column(nullable = false)
     private Boolean available = true;
-
-    @Column(name = "preparation_time")
     private Integer preparationTime;
-
-    @Column(nullable = false)
     private Boolean active = true;
 
+    public Product(String name, BigDecimal price, Store store) {
+        validateConstructParams(name, price, store);
+        this.name = name;
+        this.price = price;
+        this.store = store;
+        this.available = true;
+        this.active = true;
+    }
     public void activate() {
         this.active = true;
         this.available = true;
@@ -60,8 +47,20 @@ public class Product {
     }
 
     public void makeAvailable() {
-        if (this.active) {
+        if (Boolean.TRUE.equals(this.active)) {
             this.available = true;
+        }
+    }
+
+    private void validateConstructParams(String name, BigDecimal price, Store store) {
+        if (name == null || name.isBlank()) {
+            throw new IllegalArgumentException("Nome do produto é obrigatório");
+        }
+        if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Preço deve ser maior que zero");
+        }
+        if (store == null) {
+            throw new IllegalArgumentException("Loja não pode ser nula");
         }
     }
 }
