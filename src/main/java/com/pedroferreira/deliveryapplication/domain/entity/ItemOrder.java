@@ -10,6 +10,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString(exclude = {"order", "product"})
 public class ItemOrder {
 
     @EqualsAndHashCode.Include
