@@ -1,4 +1,4 @@
-package com.pedroferreira.deliveryapplication.domain.entity;
+package com.pedroferreira.deliveryapplication.infrastructure.persistence.entity;
 
 import com.pedroferreira.deliveryapplication.domain.enuns.UserRole;
 import jakarta.persistence.*;

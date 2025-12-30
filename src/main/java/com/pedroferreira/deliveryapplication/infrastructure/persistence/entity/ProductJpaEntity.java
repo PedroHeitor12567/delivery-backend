@@ -1,5 +1,7 @@
-package com.pedroferreira.deliveryapplication.domain.entity;
+package com.pedroferreira.deliveryapplication.infrastructure.persistence.entity;
 
+import com.pedroferreira.deliveryapplication.domain.entity.Product;
+import com.pedroferreira.deliveryapplication.domain.entity.Store;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,18 +14,16 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class ProductJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(nullable = false, precision = 10, scale = 2)
@@ -34,7 +34,7 @@ public class ProductJpaEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id", nullable = false)
-    private Store store;
+    private StoreJpaEntity store;
 
     @Column(nullable = false)
     private Boolean available = true;
@@ -43,25 +43,39 @@ public class ProductJpaEntity {
     private Integer preparationTime;
 
     @Column(nullable = false)
-    private Boolean active = true;
+    private Boolean active;
 
-    public void activate() {
-        this.active = true;
-        this.available = true;
+    public static ProductJpaEntity fromDomain(Product product) {
+        if (product == null) return null;
+
+        return ProductJpaEntity.builder()
+                .id(product.getId())
+                .name(product.getName())
+                .description(product.getDescription())
+                .price(product.getPrice())
+                .imageUrl(product.getImageUrl())
+                .available(product.getAvailable())
+                .preparationTime(product.getPreparationTime())
+                .active(product.getActive())
+                .build();
     }
 
-    public void deactivate() {
-        this.active = false;
-        this.available = false;
-    }
+    public Product toDomain() {
+        Product product = Product.builder()
+                .id(this.id)
+                .name(this.name)
+                .description(this.description)
+                .price(this.price)
+                .imageUrl(this.imageUrl)
+                .available(this.available)
+                .preparationTime(this.preparationTime)
+                .active(this.active)
+                .build();
 
-    public void makeUnavailable() {
-        this.available = false;
-    }
-
-    public void makeAvailable() {
-        if (this.active) {
-            this.available = true;
+        if (this.store != null) {
+            product.setStore(this.store.toDomain());
         }
+
+        return product;
     }
 }

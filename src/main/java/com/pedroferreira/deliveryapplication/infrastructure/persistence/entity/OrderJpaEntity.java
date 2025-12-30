@@ -1,9 +1,7 @@
 package com.pedroferreira.deliveryapplication.infrastructure.persistence.entity;
 
-import com.pedroferreira.deliveryapplication.domain.entity.Customer;
 import com.pedroferreira.deliveryapplication.domain.entity.ItemOrder;
 import com.pedroferreira.deliveryapplication.domain.entity.Order;
-import com.pedroferreira.deliveryapplication.domain.entity.Store;
 import com.pedroferreira.deliveryapplication.domain.enuns.StatusOrder;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,6 +10,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "orders")
@@ -20,30 +19,27 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class OrderJpaEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @EqualsAndHashCode.Include
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id", nullable = false)
-    private Customer customer;
+    private CustomerJpaEntity customer;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id", nullable = false)
-    private Store store;
+    private StoreJpaEntity store;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private List<ItemOrder> items = new ArrayList<>();
+    private List<ItemOrderJpaEntity> items = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default
-    private StatusOrder status = StatusOrder.CREATED;
+    @Column(nullable = false, length = 50)
+    private StatusOrder status;
 
     @Column(name = "delivery_address", nullable = false)
     private String deliveryAddress;
@@ -55,7 +51,7 @@ public class OrderJpaEntity {
     BigDecimal deliveryFee;
 
     @Column(precision = 10, scale = 2)
-    private BigDecimal discount = BigDecimal.ZERO;
+    private BigDecimal discount;
 
     @Column(name = "total_amount", precision = 10, scale = 2)
     private BigDecimal totalAmount;
@@ -81,14 +77,78 @@ public class OrderJpaEntity {
     @Column(name = "cacellation_reason", columnDefinition = "TEXT")
     private String cancellationReason;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
+    public static OrderJpaEntity fromDomain(Order order) {
+        if (order == null) return null;
+
+        OrderJpaEntity jpaEntity = OrderJpaEntity.builder()
+                .id(order.getId())
+                .status(order.getStatus())
+                .deliveryAddress(order.getDeliveryAddress())
+                .deliveryDistanceKm(order.getDeliveryDistanceKm())
+                .deliveryFee(order.getDeliveryFee())
+                .discount(order.getDiscount())
+                .totalAmount(order.getTotalAmount())
+                .createdAt(order.getCreatedAt())
+                .confirmedAt(order.getConfirmedAt())
+                .readyAt(order.getReadyAt())
+                .deliveredAt(order.getDeliveredAt())
+                .canceledAt(order.getCanceledAt())
+                .observations(order.getObservations())
+                .cancellationReason(order.getCancellationReason())
+                .build();
+
+        if (order.getItems() != null) {
+            List<ItemOrderJpaEntity> jpaItems = order.getItems().stream()
+                    .map(item -> {
+                        ItemOrderJpaEntity jpaItem = ItemOrderJpaEntity.fromDomain(item);
+                        jpaItem.setOrder(jpaEntity);
+                        return jpaItem;
+                    })
+                    .collect(Collectors.toList());
+            jpaEntity.setItems(jpaItems);
+        }
+
+        return jpaEntity;
     }
+
+    public Order toDomain() {
+        Order order = Order.builder()
+                .id(this.id)
+                .status(this.status)
+                .deliveryAddress(this.deliveryAddress)
+                .deliveryDistanceKm(this.deliveryDistanceKm)
+                .deliveryFee(this.deliveryFee)
+                .discount(this.discount)
+                .totalAmount(this.totalAmount)
+                .createdAt(this.createdAt)
+                .observations(this.observations)
+                .cancellationReason(this.cancellationReason)
+                .build();
+
+        order.setConfirmedAt(this.confirmedAt);
+        order.setReadyAt(this.readyAt);
+        order.setDeliveredAt(this.deliveredAt);
+        order.setCanceledAt(this.canceledAt);
+
+        if (this.customer != null) {
+            order.setCustomer(this.customer.toDomain());
+        }
+
+        if (this.store != null) {
+            order.setStore(this.store.toDomain());
+        }
+
+        if (this.items != null && !items.isEmpty()) {
+            List<ItemOrder> domainItems = this.items.stream()
+                    .map(ItemOrderJpaEntity::toDomain)
+                    .collect(Collectors.toList());
+            order.setItems(domainItems);
+        }
+
+        return order;
+    }
+
 }
 
-public Order toDomain(CustomerJpaEntity customerJpa, StoreJpaEntity storeJpa) {
-    Order order = new Order();
-    order.setId(this.id);
-    order.setCustomer(customerJpa.toDomain());
-}
+
+

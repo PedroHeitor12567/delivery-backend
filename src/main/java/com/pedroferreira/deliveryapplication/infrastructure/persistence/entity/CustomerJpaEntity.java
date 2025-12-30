@@ -1,5 +1,8 @@
-package com.pedroferreira.deliveryapplication.domain.entity;
+package com.pedroferreira.deliveryapplication.infrastructure.persistence.entity;
 
+import com.pedroferreira.deliveryapplication.domain.entity.Customer;
+import com.pedroferreira.deliveryapplication.domain.entity.Order;
+import com.pedroferreira.deliveryapplication.domain.entity.User;
 import com.pedroferreira.deliveryapplication.domain.enuns.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,39 +15,87 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class CustomerJpaEntity extends User{
+@AllArgsConstructor
+@Builder
+public class CustomerJpaEntity{
 
-    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Order> orders = new ArrayList<>();
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String username;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false, unique = true, length = 11)
+    private String cpf;
+
+    @Column(nullable = false)
+    private String phone;
+
+    @Column(nullable = false)
+    private String address;
+
+    @Column(nullable = false)
+    private Boolean active;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserRole role;
+
+    @Column(name = "oauth_provider")
+    private String oauthProvider;
+
+    @Column(name = "oauth_id")
+    private String oauthId;
 
     @Column(name = "loyalty_points")
-    private Integer loyaltyPoints = 0;
+    private Integer loyaltyPoints;
 
-    @Builder
-    public Customer(Long id, String username, String email, String password, String cpf, String phone, String address) {
-        super(id, username, email, password, cpf, phone, address);
-        this.loyaltyPoints = 0;
+    @OneToMany(mappedBy = "customer")
+    private List<OrderJpaEntity> orders = new ArrayList<>();
+
+    public static CustomerJpaEntity fromDomain(Customer customer) {
+        if (customer == null) return null;
+
+        return CustomerJpaEntity.builder()
+                .id(customer.getId())
+                .username(customer.getUsername())
+                .email(customer.getEmail())
+                .password(customer.getPassword())
+                .cpf(customer.getCpf())
+                .phone(customer.getPhone())
+                .address(customer.getAddress())
+                .active(customer.getActive())
+                .role(customer.getUserRole())
+                .oauthProvider(customer.getOauthProvider())
+                .oauthId(customer.getOauthId())
+                .loyaltyPoints(customer.getLoyaltyPoints())
+                .build();
     }
 
-    @Override
-    public UserRole getUserRole() {
-        return UserRole.CUSTOMER;
-    }
+    public Customer toDomain() {
+        Customer customer = Customer.builder()
+                .id(this.id)
+                .username(this.username)
+                .email(this.email)
+                .password(this.password)
+                .cpf(this.cpf)
+                .phone(this.phone)
+                .address(this.address)
+                .build();
 
-    public void addOrder(Order order) {
-        orders.add(order);
-        order.setCustomer(this);
-    }
+        customer.setActive(this.active);
+        customer.setRole(this.role);
+        customer.setOauthProvider(this.oauthProvider);
+        customer.setOauthId(this.oauthId);
+        customer.setLoyaltyPoints(this.loyaltyPoints);
 
-    public void addLoyaltyPoints(Integer points) {
-        this.loyaltyPoints += points;
-    }
-
-    public void useLoyaltyPoints(Integer points) {
-        if (this.loyaltyPoints < points) {
-            throw new IllegalStateException("Pontos de fidelidade insuficientes");
-        }
-        this.loyaltyPoints -= points;
+        return customer;
     }
 }

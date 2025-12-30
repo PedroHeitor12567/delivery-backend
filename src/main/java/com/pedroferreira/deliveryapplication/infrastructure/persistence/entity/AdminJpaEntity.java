@@ -1,10 +1,8 @@
-package com.pedroferreira.deliveryapplication.domain.entity;
+package com.pedroferreira.deliveryapplication.infrastructure.persistence.entity;
 
+import com.pedroferreira.deliveryapplication.domain.entity.Admin;
 import com.pedroferreira.deliveryapplication.domain.enuns.UserRole;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -15,43 +13,83 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-public class AdminJpaEntity extends User {
+@Builder
+public class AdminJpaEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String username;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false, unique = true, length = 11)
+    private String cpf;
+
+    @Column(nullable = false)
+    private String phone;
+
+    @Column(nullable = false)
+    private String address;
+
+    @Column(nullable = false)
+    private Boolean active;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private UserRole role;
 
     @Column(name = "full_access")
-    private Boolean fullAccess = true;
+    private Boolean fullAccess;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "createdAt")
     private LocalDateTime createdAt;
 
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
-    @Builder
-    public Admin(Long id, String username, String email, String password, String cpf, String phone, String address, Boolean fullAccess) {
-        super(id, username, email, password, cpf, phone, address, UserRole.ADMIN);
-        this.fullAccess = fullAccess != null ? fullAccess : true;
+    public static AdminJpaEntity fromDomain(Admin admin) {
+        if (admin == null) return null;
+
+        return AdminJpaEntity.builder()
+                .id(admin.getId())
+                .username(admin.getUsername())
+                .email(admin.getEmail())
+                .password(admin.getPassword())
+                .cpf(admin.getCpf())
+                .phone(admin.getPhone())
+                .address(admin.getAddress())
+                .active(admin.getActive())
+                .role(admin.getRole())
+                .fullAccess(admin.getFullAccess())
+                .createdAt(admin.getCreatedAt())
+                .lastLogin(admin.getLastLogin())
+                .build();
     }
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
+    public Admin toDomain() {
+        Admin admin = Admin.builder()
+                .id(this.id)
+                .username(this.username)
+                .email(this.email)
+                .password(this.password)
+                .cpf(this.cpf)
+                .phone(this.phone)
+                .address(this.address)
+                .fullAccess(this.fullAccess)
+                .build();
 
-    @Override
-    public UserRole getUserRole() {
-        return UserRole.ADMIN;
-    }
+        admin.setActive(this.active);
+        admin.setRole(this.role);
+        admin.setCreatedAt(this.createdAt);
+        admin.setLastLogin(this.lastLogin);
 
-    public void updateLastLogin() {
-        this.lastLogin = LocalDateTime.now();
-    }
-
-    public boolean canManageStores() {
-        return this.fullAccess && this.isActive();
-    }
-
-    public boolean canAccessStores() {
-        return this.isActive();
+        return admin;
     }
 }
