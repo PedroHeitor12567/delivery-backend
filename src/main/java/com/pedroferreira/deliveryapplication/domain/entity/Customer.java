@@ -18,7 +18,7 @@ public class Customer extends User{
 
     @Builder
     public Customer(Long id, String username, String email, String password, String cpf, String phone, String address) {
-        super(id, username, email, password, cpf, phone, address, UserRole.CUSTOMER);
+        super(username, email, password, cpf, phone, address, UserRole.CUSTOMER);
         this.setId(id);
         this.orders = new ArrayList<>();
         this.loyaltyPoints = 0;

@@ -8,11 +8,14 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
-@Builder
+/**
+ * Store - Domain Entity com Lombok
+ */
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(exclude = {"products", "createdBy"})
 public class Store {
@@ -40,8 +43,6 @@ public class Store {
     private BigDecimal baseDeliveryFee;
     private BigDecimal minimumOrder;
 
-    private Admin createdBy;
-
     @Builder.Default
     private Boolean active = true;
 
@@ -54,7 +55,14 @@ public class Store {
     @Builder.Default
     private Integer totalRatings = 0;
 
-    public Store(String name, String city, String state, String phone, String email, String address, String category, BigDecimal deliveryFeePerKm, BigDecimal baseDeliveryFee, BigDecimal minimumOrder) {
+    private Admin createdBy;
+
+    public Store(String name, String city, String state, String phone, String email,
+                 String address, String category, BigDecimal deliveryFeePerKm,
+                 BigDecimal baseDeliveryFee, BigDecimal minimumOrder) {
+        validateConstructorParams(name, city, state, phone, email, address, category,
+                deliveryFeePerKm, baseDeliveryFee, minimumOrder);
+
         this.name = name;
         this.city = city;
         this.state = state;
@@ -71,6 +79,19 @@ public class Store {
         this.rating = BigDecimal.ZERO;
         this.totalRatings = 0;
         this.products = new ArrayList<>();
+    }
+
+    // ==================== REGRAS DE NEGÓCIO ====================
+
+    public BigDecimal calculateDeliveryFee(Double distanceKm) {
+        if (distanceKm == null || distanceKm <= 0) {
+            throw new IllegalArgumentException("Distância inválida");
+        }
+
+        BigDecimal distanceFee = deliveryFeePerKm.multiply(BigDecimal.valueOf(distanceKm));
+        BigDecimal totalFee = baseDeliveryFee.add(distanceFee);
+
+        return totalFee.setScale(2, RoundingMode.HALF_UP);
     }
 
     public void addProduct(Product product) {
@@ -93,22 +114,31 @@ public class Store {
     }
 
     public void addRating(Integer stars) {
-        if (stars < 1 || stars > 5) {
+        if (stars == null || stars < 1 || stars > 5) {
             throw new IllegalArgumentException("Avaliação deve ser entre 1 e 5");
         }
+
         BigDecimal totalPoints = rating.multiply(BigDecimal.valueOf(totalRatings));
         totalRatings++;
-        this.rating = totalPoints.add(BigDecimal.valueOf(stars)).divide(BigDecimal.valueOf(totalRatings), 2, RoundingMode.HALF_UP);
+        this.rating = totalPoints.add(BigDecimal.valueOf(stars))
+                .divide(BigDecimal.valueOf(totalRatings), 2, RoundingMode.HALF_UP);
     }
 
     public boolean isOpenNow() {
-        if (!Boolean.TRUE.equals(active) || !Boolean.TRUE.equals(open)) {
+        // Verificar se está ativa E aberta
+        if (!Boolean.TRUE.equals(active)) {
             return false;
         }
 
+        if (!Boolean.TRUE.equals(open)) {
+            return false;
+        }
+
+        // Verificar horários
         if (openingTime == null || closingTime == null) {
             return false;
         }
+
         LocalTime now = LocalTime.now();
         return now.isAfter(openingTime) && now.isBefore(closingTime);
     }
@@ -121,10 +151,7 @@ public class Store {
     }
 
     public void closeStore() {
-        if (!Boolean.TRUE.equals(active)) {
-            throw new IllegalStateException("Loja desativada não pode ser aberta");
-        }
-        this.open = true;
+        this.open = false;
     }
 
     public void activate() {
@@ -136,20 +163,12 @@ public class Store {
         this.open = false;
     }
 
-    public BigDecimal calculateDeliveryFee(Double distanceKm) {
-        if (distanceKm == null || distanceKm <= 0) {
-            throw new IllegalArgumentException("Distância inválida");
-        }
+    // ==================== VALIDAÇÕES ====================
 
-        BigDecimal distanceFee = deliveryFeePerKm
-                .multiply(BigDecimal.valueOf(distanceKm));
-
-        BigDecimal totalFee = baseDeliveryFee.add(distanceFee);
-
-        return totalFee.setScale(2, RoundingMode.HALF_UP);
-    }
-
-    private void validateConstructorParams(String name, String city, String state, String phone, String email, String address, String category, BigDecimal deliveryFeePerKm, BigDecimal baseDeliveryFee, BigDecimal minimumOrder) {
+    private void validateConstructorParams(String name, String city, String state,
+                                           String phone, String email, String address,
+                                           String category, BigDecimal deliveryFeePerKm,
+                                           BigDecimal baseDeliveryFee, BigDecimal minimumOrder) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Nome da loja é obrigatório");
         }
@@ -177,9 +196,8 @@ public class Store {
         if (baseDeliveryFee == null || baseDeliveryFee.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("Taxa base deve ser maior ou igual a zero");
         }
-        if (minimumOrder == null || minimumOrder.compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Pedido mínimo deve ser maior do que zero");
+        if (minimumOrder == null || minimumOrder.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Pedido mínimo deve ser maior que zero");
         }
     }
-
 }
