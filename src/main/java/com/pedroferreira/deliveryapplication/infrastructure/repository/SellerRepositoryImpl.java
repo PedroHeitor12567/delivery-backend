@@ -37,6 +37,11 @@ public class SellerRepositoryImpl implements SellerRepository {
     }
 
     @Override
+    public Optional<Seller> findByCpf(String cpf) {
+        return Optional.empty();
+    }
+
+    @Override
     public Optional<Seller> findByStoreId(Long storeId) {
         return jpaRepository.findByStoreId(storeId)
                 .map(SellerJpaEntity::toDomain);
@@ -55,15 +60,15 @@ public class SellerRepositoryImpl implements SellerRepository {
     }
 
     @Override
+    public boolean existsByCpf(String cpf) {
+        return false;
+    }
+
+    @Override
     public void delete(Seller seller) {
         if (seller.getId() != null) {
             jpaRepository.deleteById(seller.getId());
         }
-    }
-
-    @Override
-    public void deleteById(Long id) {
-        jpaRepository.deleteById(id);
     }
 
     @Override

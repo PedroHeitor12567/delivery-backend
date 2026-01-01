@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class OrderRepositoryImpl implements OrderRespository {
 
     private final OrderJpaRepositorySpring jpaRepository;
-    private final CustomerJpaRepositorySpring customerJpaRepository;
+    private final CustomerJpaRepositoryString customerJpaRepository;
     private final StoreJpaRepositorySpring storeJpaRepository;
     private final ProductJpaRepositorySpring productJpaRepository;
 
@@ -96,6 +96,11 @@ public class OrderRepositoryImpl implements OrderRespository {
     }
 
     @Override
+    public List<Order> findByCustomerIdAndStatus(Long customerId, StatusOrder status) {
+        return List.of();
+    }
+
+    @Override
     public List<Order> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end) {
         return jpaRepository.findByCreatedAtBetween(start, end).stream()
                 .map(OrderJpaEntity::toDomain)
@@ -108,6 +113,21 @@ public class OrderRepositoryImpl implements OrderRespository {
     }
 
     @Override
+    public List<Order> findByStoreIdAndStatusIn(Long storeId, List<StatusOrder> statuses) {
+        return List.of();
+    }
+
+    @Override
+    public List<Order> findByCustomerIdOrderByCreatedAtDesc(Long customerId) {
+        return List.of();
+    }
+
+    @Override
+    public List<Order> findByStatusOrderByCreatedAtAsc(StatusOrder status) {
+        return List.of();
+    }
+
+    @Override
     public void delete(Order order) {
         if (order.getId() != null) {
             jpaRepository.deleteById(order.getId());
@@ -115,13 +135,13 @@ public class OrderRepositoryImpl implements OrderRespository {
     }
 
     @Override
-    public void deleteById(Long id) {
-        jpaRepository.deleteById(id);
+    public Long count() {
+        return jpaRepository.count();
     }
 
     @Override
-    public Long count() {
-        return jpaRepository.count();
+    public List<Order> findByStoreIdAndStatus(Long id, StatusOrder statusOrder) {
+        return List.of();
     }
 }
 

@@ -67,10 +67,13 @@ public class StoreRepositoryImpl implements StoreRespository {
     }
 
     @Override
-    public List<Store> searchByName(String name) {
-        return jpaRepository.searchByNameContaining(name).stream()
-                .map(StoreJpaEntity::toDomain)
-                .collect(Collectors.toList());
+    public List<Store> findByCityAndActiveTrue(String city) {
+        return List.of();
+    }
+
+    @Override
+    public List<Store> searchOpenStores(String search) {
+        return List.of();
     }
 
     @Override
@@ -78,11 +81,6 @@ public class StoreRepositoryImpl implements StoreRespository {
         if (store.getId() != null) {
             jpaRepository.deleteById(store.getId());
         }
-    }
-
-    @Override
-    public void deleteById(Long id) {
-        jpaRepository.deleteById(id);
     }
 
     @Override

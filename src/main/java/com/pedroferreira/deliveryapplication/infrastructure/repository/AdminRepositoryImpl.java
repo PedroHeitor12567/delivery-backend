@@ -36,6 +36,11 @@ public class AdminRepositoryImpl implements AdminRepository {
     }
 
     @Override
+    public Optional<Admin> findByCpf(String cpf) {
+        return Optional.empty();
+    }
+
+    @Override
     public List<Admin> findAll() {
         return jpaRepository.findAll().stream()
                 .map(AdminJpaEntity::toDomain)
@@ -66,11 +71,6 @@ public class AdminRepositoryImpl implements AdminRepository {
         if (admin.getId() != null) {
             jpaRepository.deleteById(admin.getId());
         }
-    }
-
-    @Override
-    public void deleteById(Long id) {
-        jpaRepository.deleteById(id);
     }
 
     @Override

@@ -68,6 +68,11 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
+    public List<Product> findAvailableProductsByStore(Long storeId) {
+        return List.of();
+    }
+
+    @Override
     public Long countByAvailableTrue() {
         return jpaRepository.countByAvailableTrue();
     }
@@ -77,11 +82,6 @@ public class ProductRepositoryImpl implements ProductRepository {
         if (product.getId() != null) {
             jpaRepository.deleteById(product.getId());
         }
-    }
-
-    @Override
-    public void deleteById(Long id) {
-        jpaRepository.deleteById(id);
     }
 
     @Override

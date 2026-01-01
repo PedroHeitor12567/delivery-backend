@@ -43,6 +43,11 @@ public class CustomerRepositoryImpl implements CustomerRepository {
     }
 
     @Override
+    public Optional<Customer> findByUsername(String username) {
+        return Optional.empty();
+    }
+
+    @Override
     public Optional<Customer> findByOauthProviderAndOauthId(String provider, String oauthId) {
         return jpaRepository.findByOauthProviderAndOauthId(provider, oauthId)
                 .map(CustomerJpaEntity::toDomain);
@@ -77,11 +82,6 @@ public class CustomerRepositoryImpl implements CustomerRepository {
         if (customer.getId() != null) {
             jpaRepository.deleteById(customer.getId());
         }
-    }
-
-    @Override
-    public void deleteById(Long id) {
-        jpaRepository.deleteById(id);
     }
 
     @Override
