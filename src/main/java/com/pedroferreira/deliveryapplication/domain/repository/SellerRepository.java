@@ -1,18 +1,21 @@
 package com.pedroferreira.deliveryapplication.domain.repository;
 
 import com.pedroferreira.deliveryapplication.domain.entity.Seller;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface SellerRepository {
     Seller save(Seller seller);
     Optional<Seller> findById(Long id);
-    Optional<Seller> findByEmail(String email);
     Optional<Seller> findByStoreId(Long storeId);
-    List<Seller> findAll();
+    Optional<Seller> findByEmail(String email);
+    Optional<Seller> findByCpf(String cpf);
     boolean existsByEmail(String email);
+    boolean existsByCpf(String cpf);
+    List<Seller> findAll();
     void delete(Seller seller);
-    void deleteById(Long id);
     Long count();
 }
