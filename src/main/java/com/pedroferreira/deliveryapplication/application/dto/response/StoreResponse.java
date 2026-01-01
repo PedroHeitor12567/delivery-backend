@@ -26,7 +26,8 @@ public class StoreResponse {
     private String category;
     private LocalTime openingTime;
     private LocalTime closingTime;
-    private BigDecimal deliveryFee;
+    private BigDecimal deliveryFeePerKM;
+    private BigDecimal baseDeliveryFee;
     private BigDecimal minimumOrder;
     private Boolean active;
     private Boolean open;
@@ -47,7 +48,8 @@ public class StoreResponse {
                 .category(store.getCategory())
                 .openingTime(store.getOpeningTime())
                 .openingTime(store.getClosingTime())
-                .deliveryFee(store.getDeliveryFee())
+                .deliveryFeePerKM(store.getDeliveryFeePerKm())
+                .baseDeliveryFee(store.getBaseDeliveryFee())
                 .minimumOrder(store.getMinimumOrder())
                 .active(store.getActive())
                 .rating(store.getRating())

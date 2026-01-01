@@ -35,7 +35,7 @@ public class OrderResponse {
     private String observations;
     private String cancellationReason;
 
-    public static OrderResponse fromEntity(Order order) {
+    public static OrderResponse fromDomain(Order order) {
         return OrderResponse.builder()
                 .id(order.getId())
                 .customer(CustomerSimpleResponse.fromEntity(order.getCustomer()))
