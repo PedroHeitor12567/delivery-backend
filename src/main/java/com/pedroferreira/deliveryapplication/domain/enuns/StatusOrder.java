@@ -8,9 +8,9 @@ import static com.pedroferreira.deliveryapplication.domain.enuns.EventRequest.*;
 
 public enum StatusOrder {
 
-    CREATED(Set.of(UserRole.CUSTOMER)),
+    CREATED(Set.of(UserRole.CUSTOMER, UserRole.SELLER)),
     CONFIRMED(Set.of(UserRole.SELLER)),
-    READY(Set.of(UserRole.SELLER)),
+    READY(Set.of(UserRole.SELLER, UserRole.SYSTEM)),
     LEFT_FOR_DELIVERY(Set.of(UserRole.SYSTEM)),
     DELIVERED(Set.of()),
     CANCELED(Set.of());

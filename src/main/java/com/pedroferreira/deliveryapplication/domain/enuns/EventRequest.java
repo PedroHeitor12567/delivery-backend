@@ -11,7 +11,7 @@ public enum EventRequest {
     CANCEL;
 
     public boolean ehCancellation(){
-        return this == CANCEL;
+        return this == CANCEL || this == REFUSE;
     }
 
     public boolean ehDeliver(){
