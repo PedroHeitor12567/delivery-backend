@@ -10,9 +10,7 @@ import java.time.LocalTime;
 
 import static org.assertj.core.api.Assertions.*;
 
-/**
- * Testes de Domain - SEM frameworks, apenas regras de negócio
- */
+
 @DisplayName("Order Domain Tests")
 class OrderTest {
 
@@ -22,7 +20,7 @@ class OrderTest {
 
     @BeforeEach
     void setUp() {
-        // Setup Customer
+
         customer = Customer.builder()
                 .id(1L)
                 .username("testuser")
@@ -33,7 +31,6 @@ class OrderTest {
                 .address("Test Address, 123")
                 .build();
 
-        // Setup Store
         store = Store.builder()
                 .id(1L)
                 .name("Test Store")
