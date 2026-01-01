@@ -3,8 +3,10 @@ package com.pedroferreira.deliveryapplication.presentation.controller;
 import com.pedroferreira.deliveryapplication.application.dto.requests.CreateOrderRequest;
 import com.pedroferreira.deliveryapplication.application.dto.response.OrderResponse;
 import com.pedroferreira.deliveryapplication.application.service.OrderService;
+import com.pedroferreira.deliveryapplication.application.usecase.CreateOrderUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,90 +16,66 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
+@Slf4j
 public class OrderController {
 
-    private final OrderService orderService;
+    private final CreateOrderUseCase createOrderUseCase;
 
     @PostMapping
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request) {
-        OrderResponse response = orderService.createOrder(request);
+        log.info("POST /api/orders - Criando pedido para clientes: {}", request.getCustomerId());
+        OrderResponse response = createOrderUseCase.execute(request);
+        log.info("Pedido criado com sucesso - ID: {}", response.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping("/{orderId}")
-    public ResponseEntity<OrderResponse> getOrderById(@PathVariable Long orderId) {
-        OrderResponse response = orderService.getOrderById(orderId);
-        return ResponseEntity.ok(response);
+    @GetMapping("/{id}")
+    public ResponseEntity<OrderResponse> getOrder(@PathVariable Long id) {
+        log.info("GET /api/orders/{} - Buscando pedido", id);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/customer/{customerId}")
-    public ResponseEntity<List<OrderResponse>> getOrdersByCustomer(@PathVariable Long customerId) {
-        List<OrderResponse> orders = orderService.getOrdersByCustomer(customerId);
-        return ResponseEntity.ok(orders);
+    public ResponseEntity<List<OrderResponse>> getCustomersOrders(@PathVariable Long customerId) {
+        log.info("GET /api/orders/customer/{} - Buscando pedidos do cliente", customerId);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/store/{storeId}")
-    public ResponseEntity<List<OrderResponse>> getOrdersByStore(@PathVariable Long storeId) {
-        List<OrderResponse> orders = orderService.getOrdersByStore(storeId);
-        return ResponseEntity.ok(orders);
+    public ResponseEntity<List<OrderResponse>> getStoreOrders(@PathVariable Long storeId) {
+        log.info("GET /api/orders/store/{} - Buscando pedidos da loja", storeId);
+        return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/store/{storeId}/active")
-    public ResponseEntity<List<OrderResponse>> getAtiveOrdersByStore(@PathVariable Long storeId) {
-        List<OrderResponse> orders = orderService.getActiveOrdersByStore(storeId);
-        return ResponseEntity.ok(orders);
-    }
-
-    @GetMapping("/ready")
-    public ResponseEntity<List<OrderResponse>> getReadyOrders() {
-        List<OrderResponse> orders = orderService.getReadyOrders();
-        return ResponseEntity.ok(orders);
-    }
-
-    @PutMapping("/{orderId}/confirm")
+    @PutMapping("/{id}/confirm")
     public ResponseEntity<OrderResponse> confirmOrder(
-            @PathVariable Long orderId,
+            @PathVariable Long id,
             @RequestParam Long sellerId
     ) {
-        OrderResponse response = orderService.confrimOrder(orderId, sellerId);
-        return ResponseEntity.ok(response);
+        log.info("PUT /api/orders/{}/confirm - Confirmando pedido", id);
+        return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/{orderId}/refuse")
-    public ResponseEntity<OrderResponse> refuseOrder(
-            @PathVariable Long orderId,
-            @RequestParam String reason
-    ) {
-        OrderResponse response = orderService.refuseOrder(orderId, reason);
-        return ResponseEntity.ok(response);
+    @PutMapping("/{id}/ready")
+    public ResponseEntity<OrderResponse> markOrderReady(@PathVariable Long id) {
+        log.info("PUT /api/orders/{}/ready - Marcando pedido como pronto", id);
+        return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/{orderId}/ready")
-    public ResponseEntity<OrderResponse> markOrderReady(@PathVariable Long orderId) {
-        OrderResponse response = orderService.markOrderReady(orderId);
-        return ResponseEntity.ok(response);
+    @PutMapping("/{id}/deliver")
+    public ResponseEntity<OrderResponse> deliverOrder(@PathVariable Long id) {
+        log.info("PUT /api/orders/{}/deliver - Entregando pedido", id);
+        return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/{orderId}/exit-delivery")
-    public ResponseEntity<OrderResponse> exitForDelivery(@PathVariable Long orderId) {
-        OrderResponse response = orderService.exitForDelivery(orderId);
-        return ResponseEntity.ok(response);
-    }
-
-    @PutMapping("/{orderId}/deliver")
-    public ResponseEntity<OrderResponse> deliverOrder(@PathVariable Long orderId) {
-        OrderResponse response = orderService.deliverOrder(orderId);
-        return ResponseEntity.ok(response);
-    }
-
-    @PutMapping("/{orderId}/cancel")
+    @PutMapping("/{id}/cancel")
     public ResponseEntity<OrderResponse> cancelOrder(
-            @PathVariable Long orderId,
+            @PathVariable Long id,
             @RequestParam Long customerId,
             @RequestParam String reason
     ) {
-        OrderResponse response = orderService.cancelOrder(orderId, customerId, reason);
-        return ResponseEntity.ok(response);
+        log.info("PUT /api/orders/{}/cancel - Cancelando pedido", id);
+        return ResponseEntity.ok().build();
     }
 
 }

@@ -5,6 +5,7 @@ import com.pedroferreira.deliveryapplication.application.dto.response.StoreRespo
 import com.pedroferreira.deliveryapplication.application.service.StoreService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,85 +15,63 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/stores")
 @RequiredArgsConstructor
+@Slf4j
 public class StoreContoller {
-
-    private final StoreService storeService;
 
     @PostMapping
     public ResponseEntity<StoreResponse> createStore(@Valid @RequestBody CreateStoreRequest request){
-        StoreResponse response = storeService.createStore(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        log.info("POST /api/stores - Criando loja: {}", request.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PutMapping("/{storeId}")
-    public ResponseEntity<StoreResponse> updateStore(
-            @PathVariable Long storeId,
-            @Valid @RequestBody CreateStoreRequest request
-    ) {
-        StoreResponse response = storeService.updateStore(storeId, request);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping("/{storeId}")
-    public ResponseEntity<StoreResponse> getStoreById(@PathVariable Long storeId) {
-        StoreResponse response = storeService.getStoreById(storeId);
-        return ResponseEntity.ok(response);
+    @GetMapping("/{id}")
+    public ResponseEntity<StoreResponse> getStore(@PathVariable Long id) {
+        log.info("GET /api/stores/{} - Buscando loja", id);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping
-    public ResponseEntity<List<StoreResponse>> getAllActiveStores() {
-        List<StoreResponse> stores = storeService.getAllActiveStores();
-        return ResponseEntity.ok(stores);
+    public ResponseEntity<List<StoreResponse>> getAllStores() {
+        log.info("GET /api/stores - Listando todas as lojas");
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/open")
     public ResponseEntity<List<StoreResponse>> getOpenStores() {
-        List<StoreResponse> stores = storeService.getOpenStores();
-        return ResponseEntity.ok(stores);
+        log.info("GET /api/stores/open - Listando lojas abertas");
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/category/{category}")
     public ResponseEntity<List<StoreResponse>> getStoresByCategory(@PathVariable String category) {
-        List<StoreResponse> stores = storeService.getStoresByCategory(category);
-        return ResponseEntity.ok(stores);
+        log.info("GET /api/stores/category/{} - Buscando lojas por categoria", category);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<StoreResponse>> searchStores(@RequestParam String search) {
-        List<StoreResponse> stores = storeService.searchStores(search);
-        return ResponseEntity.ok(stores);
+    public ResponseEntity<List<StoreResponse>> searchStores(@RequestParam String q) {
+        log.info("GET /api/stores/search?q={} - Pesquisando lojas", q);
+        return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/{storeId}/open")
-    public ResponseEntity<Void> openStore(@PathVariable Long storeId) {
-        storeService.openStore(storeId);
+    @PutMapping("/{id}/open")
+    public ResponseEntity<Void> openStore(@PathVariable Long id) {
+        log.info("PUT /api/stores/{}/open - Abrindo loja", id);
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{storeId}/close")
-    public ResponseEntity<Void> closeStore(@PathVariable Long storeId) {
-        storeService.closeStore(storeId);
+    @PutMapping("/{id}/close")
+    public ResponseEntity<Void> closeStore(@PathVariable Long id) {
+        log.info("PUT /api/stores/{}/closed - Fechando loja", id);
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{storeId}/activate")
-    public ResponseEntity<Void> activateStore(@PathVariable Long storeId) {
-        storeService.activateStore(storeId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PutMapping("/{storeId}/deactivate")
-    public ResponseEntity<Void> deactivateStore(@PathVariable Long storeId) {
-        storeService.deactivateStore(storeId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PostMapping("/{storeId}/rating")
+    @PostMapping("/{id}/rating")
     public ResponseEntity<Void> addRating(
-            @PathVariable Long storeId,
+            @PathVariable Long id,
             @RequestParam Integer stars
     ) {
-        storeService.addRating(storeId, stars);
+        log.info("POST /api/stores/{}/rating - Avaliando loja com {} estrelas", id, stars);
         return ResponseEntity.noContent().build();
     }
 }
