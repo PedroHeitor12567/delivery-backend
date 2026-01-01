@@ -6,6 +6,10 @@ import com.pedroferreira.deliveryapplication.domain.entity.*;
 import com.pedroferreira.deliveryapplication.domain.enuns.EventRequest;
 import com.pedroferreira.deliveryapplication.domain.enuns.StatusOrder;
 import com.pedroferreira.deliveryapplication.domain.enuns.UserRole;
+import com.pedroferreira.deliveryapplication.domain.repository.CustomerRepository;
+import com.pedroferreira.deliveryapplication.domain.repository.OrderRespository;
+import com.pedroferreira.deliveryapplication.domain.repository.ProductRepository;
+import com.pedroferreira.deliveryapplication.domain.repository.StoreRespository;
 import com.pedroferreira.deliveryapplication.infrastructure.repository.*;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +23,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderService {
 
-    private final OrderRepository orderRepository;
+    private final OrderRespository orderRepository;
     private final CustomerRepository customerRepository;
-    private final StoreRepository storeRepository;
+    private final StoreRespository storeRepository;
     private final ProductRepository productRepository;
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request) {
@@ -73,7 +77,7 @@ public class OrderService {
         Order saveOrder = orderRepository.save(order);
         customer.addOrder(saveOrder);
 
-        return OrderResponse.fromEntity(saveOrder);
+        return OrderResponse.fromDomain(saveOrder);
     }
 
     @Transactional
@@ -83,7 +87,7 @@ public class OrderService {
         order.execute(EventRequest.CONFIRM, UserRole.SELLER);
 
         Order updateOrder = orderRepository.save(order);
-        return OrderResponse.fromEntity(updateOrder);
+        return OrderResponse.fromDomain(updateOrder);
     }
 
     @Transactional
@@ -94,7 +98,7 @@ public class OrderService {
         order.execute(EventRequest.REFUSE, UserRole.SELLER);
 
         Order updateOrder = orderRepository.save(order);
-        return OrderResponse.fromEntity(updateOrder);
+        return OrderResponse.fromDomain(updateOrder);
     }
 
     @Transactional
@@ -104,7 +108,7 @@ public class OrderService {
         order.execute(EventRequest.MARK_POINT, UserRole.SELLER);
 
         Order updateOrder = orderRepository.save(order);
-        return OrderResponse.fromEntity(updateOrder);
+        return OrderResponse.fromDomain(updateOrder);
     }
 
     @Transactional
@@ -114,7 +118,7 @@ public class OrderService {
         order.execute(EventRequest.EXIT_FOR_DELIVERY, UserRole.SYSTEM);
 
         Order updateOrder = orderRepository.save(order);
-        return OrderResponse.fromEntity(updateOrder);
+        return OrderResponse.fromDomain(updateOrder);
     }
 
     @Transactional
@@ -128,7 +132,7 @@ public class OrderService {
         storeRepository.save(store);
 
         Order updateOrder = orderRepository.save(order);
-        return OrderResponse.fromEntity(updateOrder);
+        return OrderResponse.fromDomain(updateOrder);
     }
 
     @Transactional
@@ -146,20 +150,20 @@ public class OrderService {
         order.cancel(reason);
 
         Order updateOrder = orderRepository.save(order);
-        return OrderResponse.fromEntity(updateOrder);
+        return OrderResponse.fromDomain(updateOrder);
     }
 
     @Transactional(readOnly = true)
     public OrderResponse getOrderById(Long orderId) {
         Order order = findByOrderId(orderId);
-        return OrderResponse.fromEntity(order);
+        return OrderResponse.fromDomain(order);
     }
 
     @Transactional(readOnly = true)
     public List<OrderResponse> getOrdersByCustomer(Long customerId) {
         return orderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId)
                 .stream()
-                .map(OrderResponse::fromEntity)
+                .map(OrderResponse::fromDomain)
                 .collect(Collectors.toList());
     }
 
@@ -167,7 +171,7 @@ public class OrderService {
     public List<OrderResponse> getOrdersByStore(Long storeId) {
         return orderRepository.findByStoreId(storeId)
                 .stream()
-                .map(OrderResponse::fromEntity)
+                .map(OrderResponse::fromDomain)
                 .collect(Collectors.toList());
     }
 
@@ -182,7 +186,7 @@ public class OrderService {
 
         return orderRepository.findByStoreId(storeId)
                 .stream()
-                .map(OrderResponse::fromEntity)
+                .map(OrderResponse::fromDomain)
                 .collect(Collectors.toList());
     }
 
@@ -190,7 +194,7 @@ public class OrderService {
     public List<OrderResponse> getReadyOrders() {
         return orderRepository.findByStatusOrderByCreatedAtAsc(StatusOrder.READY)
                 .stream()
-                .map(OrderResponse::fromEntity)
+                .map(OrderResponse::fromDomain)
                 .collect(Collectors.toList());
     }
 

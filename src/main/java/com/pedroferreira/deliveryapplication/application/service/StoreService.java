@@ -3,7 +3,7 @@ package com.pedroferreira.deliveryapplication.application.service;
 import com.pedroferreira.deliveryapplication.application.dto.requests.CreateStoreRequest;
 import com.pedroferreira.deliveryapplication.application.dto.response.StoreResponse;
 import com.pedroferreira.deliveryapplication.domain.entity.Store;
-import com.pedroferreira.deliveryapplication.infrastructure.repository.StoreRepository;
+import com.pedroferreira.deliveryapplication.domain.repository.StoreRespository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class StoreService {
 
-    private final StoreRepository storeRepository;
+    private final StoreRespository storeRepository;
 
     @Transactional
     public StoreResponse createStore(CreateStoreRequest request) {
@@ -57,7 +57,8 @@ public class StoreService {
         store.setPhone(request.getPhone());
         store.setAddress(request.getAddress());
         store.setCategory(request.getCategory());
-        store.setDeliveryFee(request.getDeliveryFee());
+        store.setDeliveryFeePerKm(request.getDeliveryFeePerKm());
+        store.setBaseDeliveryFee(request.getBaseDeliveryFee());
         store.setMinimumOrder(request.getMinimumOrder());
 
         if (request.getOpeningTime() != null) {
