@@ -25,6 +25,7 @@ public enum StatusOrder {
         return switch (this) {
             case CREATED -> Map.of(
                     CONFIRM, CONFIRMED,
+                    REFUSE, CANCELED,
                     CANCEL, CANCELED
             );
             case CONFIRMED -> Map.of(
