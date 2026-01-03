@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class OrderResponse {
 
     private Long id;
-    private CustomerSimpleResponse customer;
+    private CustomerResponse customer;
     private StoreSimpleResponse store;
     private List<ItemOrderResponse> items;
     private StatusOrder status;
@@ -38,7 +38,7 @@ public class OrderResponse {
     public static OrderResponse fromDomain(Order order) {
         return OrderResponse.builder()
                 .id(order.getId())
-                .customer(CustomerSimpleResponse.fromEntity(order.getCustomer()))
+                .customer(CustomerResponse.fromEntity(order.getCustomer()))
                 .store(StoreSimpleResponse.fromEntity(order.getStore()))
                 .items(order.getItems().stream()
                         .map(ItemOrderResponse::fromEntity)
