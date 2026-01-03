@@ -38,10 +38,10 @@ public class StoreJpaEntity {
     private String state;
 
     @OneToMany(mappedBy = "store")
-    private List<Product> products = new ArrayList<>();
+    private List<ProductJpaEntity> products = new ArrayList<>();
 
     @OneToMany(mappedBy = "store")
-    private List<Order> orders = new ArrayList<>();
+    private List<OrderJpaEntity> orders = new ArrayList<>();
 
     @Column(name = "total_sales")
     private Integer totalSales = 0;

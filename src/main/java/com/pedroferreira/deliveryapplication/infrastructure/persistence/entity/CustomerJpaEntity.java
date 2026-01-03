@@ -1,8 +1,6 @@
 package com.pedroferreira.deliveryapplication.infrastructure.persistence.entity;
 
 import com.pedroferreira.deliveryapplication.domain.entity.Customer;
-import com.pedroferreira.deliveryapplication.domain.entity.Order;
-import com.pedroferreira.deliveryapplication.domain.entity.User;
 import com.pedroferreira.deliveryapplication.domain.enuns.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
