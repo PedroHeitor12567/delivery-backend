@@ -15,7 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
  * Em produção, você deve implementar autenticação e autorização adequadas.
  */
 @Configuration
-@EnableWebSecurit
+@EnableWebSecurity
 public class SecurityConfig {
 
     @Bean
