@@ -53,43 +53,4 @@ public class AdminJpaEntity {
 
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
-
-    public static AdminJpaEntity fromDomain(Admin admin) {
-        if (admin == null) return null;
-
-        return AdminJpaEntity.builder()
-                .id(admin.getId())
-                .username(admin.getUsername())
-                .email(admin.getEmail())
-                .password(admin.getPassword())
-                .cpf(admin.getCpf())
-                .phone(admin.getPhone())
-                .address(admin.getAddress())
-                .active(admin.getActive())
-                .role(admin.getRole())
-                .fullAccess(admin.getFullAccess())
-                .createdAt(admin.getCreatedAt())
-                .lastLogin(admin.getLastLogin())
-                .build();
-    }
-
-    public Admin toDomain() {
-        Admin admin = Admin.builder()
-                .id(this.id)
-                .username(this.username)
-                .email(this.email)
-                .password(this.password)
-                .cpf(this.cpf)
-                .phone(this.phone)
-                .address(this.address)
-                .fullAccess(this.fullAccess)
-                .build();
-
-        admin.setActive(this.active);
-        admin.setRole(this.role);
-        admin.setCreatedAt(this.createdAt);
-        admin.setLastLogin(this.lastLogin);
-
-        return admin;
-    }
 }

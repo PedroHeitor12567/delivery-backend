@@ -38,32 +38,4 @@ public class ItemOrderJpaEntity {
 
     @Column(columnDefinition = "TEXT")
     private String observations;
-
-    public static ItemOrderJpaEntity fromDomain(ItemOrder itemOrder) {
-        if (itemOrder == null) return null;
-
-        return ItemOrderJpaEntity.builder()
-                .id(itemOrder.getId())
-                .quantity(itemOrder.getQuantity())
-                .unitPrice(itemOrder.getUnitPrice())
-                .discount(itemOrder.getDiscount())
-                .observations(itemOrder.getObservations())
-                .build();
-    }
-
-    public ItemOrder toDomain() {
-        ItemOrder itemOrder = ItemOrder.builder()
-                .id(this.id)
-                .quantity(this.quantity)
-                .unitPrice(this.unitPrice)
-                .discount(this.discount)
-                .observations(this.observations)
-                .build();
-
-        if (this.product != null) {
-            itemOrder.setProduct(this.product.toDomain());
-        }
-
-        return itemOrder;
-    }
 }

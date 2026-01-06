@@ -57,43 +57,4 @@ public class CustomerJpaEntity{
 
     @OneToMany(mappedBy = "customer")
     private List<OrderJpaEntity> orders = new ArrayList<>();
-
-    public static CustomerJpaEntity fromDomain(Customer customer) {
-        if (customer == null) return null;
-
-        return CustomerJpaEntity.builder()
-                .id(customer.getId())
-                .username(customer.getUsername())
-                .email(customer.getEmail())
-                .password(customer.getPassword())
-                .cpf(customer.getCpf())
-                .phone(customer.getPhone())
-                .address(customer.getAddress())
-                .active(customer.getActive())
-                .role(customer.getUserRole())
-                .oauthProvider(customer.getOauthProvider())
-                .oauthId(customer.getOauthId())
-                .loyaltyPoints(customer.getLoyaltyPoints())
-                .build();
-    }
-
-    public Customer toDomain() {
-        Customer customer = Customer.builder()
-                .id(this.id)
-                .username(this.username)
-                .email(this.email)
-                .password(this.password)
-                .cpf(this.cpf)
-                .phone(this.phone)
-                .address(this.address)
-                .build();
-
-        customer.setActive(this.active);
-        customer.setRole(this.role);
-        customer.setOauthProvider(this.oauthProvider);
-        customer.setOauthId(this.oauthId);
-        customer.setLoyaltyPoints(this.loyaltyPoints);
-
-        return customer;
-    }
 }

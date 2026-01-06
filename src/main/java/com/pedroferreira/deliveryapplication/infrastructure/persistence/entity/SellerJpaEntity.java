@@ -49,41 +49,4 @@ public class SellerJpaEntity {
     @OneToOne
     @JoinColumn(name = "store_id")
     private StoreJpaEntity store;
-
-    public static SellerJpaEntity fromDomain(Seller seller) {
-        if (seller == null)  return null;
-
-        return SellerJpaEntity.builder()
-                .id(seller.getId())
-                .username(seller.getUsername())
-                .email(seller.getEmail())
-                .password(seller.getPassword())
-                .cpf(seller.getCpf())
-                .phone(seller.getPhone())
-                .address(seller.getAddress())
-                .active(seller.getActive())
-                .role(seller.getRole())
-                .build();
-    }
-
-    public Seller toDomain() {
-        Seller seller = Seller.builder()
-                .id(this.id)
-                .username(this.username)
-                .email(this.email)
-                .password(this.password)
-                .cpf(this.cpf)
-                .phone(this.phone)
-                .address(this.address)
-                .build();
-
-        seller.setActive(this.active);
-        seller.setRole(this.role);
-
-        if (this.store != null) {
-            seller.setStore(this.store.toDomain());
-        }
-
-        return seller;
-    }
 }

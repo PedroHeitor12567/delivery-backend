@@ -44,38 +44,4 @@ public class ProductJpaEntity {
 
     @Column(nullable = false)
     private Boolean active;
-
-    public static ProductJpaEntity fromDomain(Product product) {
-        if (product == null) return null;
-
-        return ProductJpaEntity.builder()
-                .id(product.getId())
-                .name(product.getName())
-                .description(product.getDescription())
-                .price(product.getPrice())
-                .imageUrl(product.getImageUrl())
-                .available(product.getAvailable())
-                .preparationTime(product.getPreparationTime())
-                .active(product.getActive())
-                .build();
-    }
-
-    public Product toDomain() {
-        Product product = Product.builder()
-                .id(this.id)
-                .name(this.name)
-                .description(this.description)
-                .price(this.price)
-                .imageUrl(this.imageUrl)
-                .available(this.available)
-                .preparationTime(this.preparationTime)
-                .active(this.active)
-                .build();
-
-        if (this.store != null) {
-            product.setStore(this.store.toDomain());
-        }
-
-        return product;
-    }
 }
