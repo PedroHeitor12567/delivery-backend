@@ -1,60 +1,88 @@
 package com.pedroferreira.deliveryapplication.infrastructure.config;
 
+import com.pedroferreira.deliveryapplication.infrastructure.security.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-/**
- * Configuração de Segurança
- *
- * ATENÇÃO: Esta configuração está LIBERANDO TUDO para desenvolvimento.
- * Em produção, você deve implementar autenticação e autorização adequadas.
- */
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+    private final JwtAuthenticationFilter jwtAuthFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // Desabilita CSRF (necessário para APIs REST stateless)
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // Configura autorização de requisições
                 .authorizeHttpRequests(auth -> auth
-                        // Swagger UI e OpenAPI docs - PÚBLICO
                         .requestMatchers(
                                 "/swagger-ui/**",
-                                "/swagger-ui.html",
                                 "/v3/api-docs/**",
-                                "/swagger-resources/**",
-                                "/webjars/**"
+                                "/h2-console/**",
+                                "/api/auth/**"
                         ).permitAll()
 
-                        // H2 Console - PÚBLICO (apenas para desenvolvimento)
-                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/customers/register").permitAll()
 
-                        // Endpoints da API - PÚBLICO (temporário para desenvolvimento)
-                        .requestMatchers("/api/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/stores",
+                                "/api/stores/*",
+                                "/api/stores/open",
+                                "/api/stores/category/**",
+                                "/api/stores/search",
+                                "/api/products/store/**"
+                        ).permitAll()
 
-                        // Qualquer outra requisição - PÚBLICO (temporário)
-                        .anyRequest().permitAll()
+                        .requestMatchers(
+                                "/api/customers/**",
+                                "/api/orders"
+                        ).hasRole("CUSTOMER")
+
+                        .requestMatchers(HttpMethod.GET, "/api/orders/customer/**").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.PUT, "/api/orders/*/cancel").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/sellers/apply").hasRole("CUSTOMER")
+
+                        .requestMatchers("/api/sellers/**").hasRole("SELLER")
+                        .requestMatchers(HttpMethod.PUT,
+                                "/api/stores/*/open",
+                                "/api/stores/*/close"
+                        ).hasRole("SELLER")
+
+                        .requestMatchers(HttpMethod.GET, "/api/orders/store/**").hasRole("SELLER")
+                        .requestMatchers("/api/products/**").hasRole("SELLER")
+
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
+                        .anyRequest().authenticated()
                 )
 
-                // Desabilita gerenciamento de sessão (API stateless)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // Permite frames do H2 Console
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+
                 .headers(headers ->
                         headers.frameOptions(frameOptions -> frameOptions.disable())
                 );
 
         return http.build();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }
