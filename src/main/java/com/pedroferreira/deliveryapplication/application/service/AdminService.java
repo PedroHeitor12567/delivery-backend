@@ -1,12 +1,16 @@
 package com.pedroferreira.deliveryapplication.application.service;
 
+import com.pedroferreira.deliveryapplication.application.dto.requests.ApproveSellerRequest;
+import com.pedroferreira.deliveryapplication.application.dto.requests.CreateProductRequest;
 import com.pedroferreira.deliveryapplication.application.dto.requests.CreateStoreRequest;
 import com.pedroferreira.deliveryapplication.application.dto.response.*;
 import com.pedroferreira.deliveryapplication.application.dto.response.admin_response.*;
+import com.pedroferreira.deliveryapplication.application.usecase.BusinessException;
 import com.pedroferreira.deliveryapplication.domain.entity.*;
 import com.pedroferreira.deliveryapplication.domain.enuns.StatusOrder;
 import com.pedroferreira.deliveryapplication.domain.repository.*;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AdminService {
 
     private final AdminRepository adminRepository;
@@ -27,6 +32,190 @@ public class AdminService {
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
     private final SellerRepository sellerRepository;
+
+    private static final BigDecimal PLATFORM_FEE_PERCENTAGE = BigDecimal.valueOf(0.04);
+
+    @Transactional(readOnly = true)
+    public List<SellerApplicationResponse> getPendingApplications() {
+        return List.of();
+    }
+
+    @Transactional
+    public SellerResponse approveSellerApplication(Long applicationId, ApproveSellerRequest request) {
+        log.info("Admin {} aprovando solicitações {}", request.getAdminId(), applicationId);
+
+        Admin admin = findAdminById(request.getAdminId());
+
+        Store store = Store.builder()
+                .name(request.getStoreData().getName())
+                .description(request.getStoreData().getDescription())
+                .city(request.getStoreData().getCity())
+                .state(request.getStoreData().getState())
+                .phone(request.getStoreData().getPhone())
+                .email(request.getStoreData().getEmail())
+                .address(request.getStoreData().getAddress())
+                .category(request.getStoreData().getCategory())
+                .deliveryFeePerKm(request.getDeliveryFeePerKm())
+                .baseDeliveryFee(request.getBaseDeliveryFee())
+                .minimumOrder(request.getMinimumOrder())
+                .active(true)
+                .open(false)
+                .createdBy(admin)
+                .build();
+
+        Store savedStore = storeRepository.save(store);
+
+        Seller seller = Seller.builder()
+                .username("seller_" + savedStore.getId())
+                .email(savedStore.getEmail())
+                .password("TEMP_PASS")
+                .cpf("00000000000")
+                .phone(savedStore.getPhone())
+                .address(savedStore.getAddress())
+                .store(savedStore)
+                .build();
+
+        Seller savedSeller = sellerRepository.save(seller);
+
+        if (request.getInitialProducts() != null) {
+            request.getInitialProducts().forEach(productReq -> {
+                Product product = Product.builder()
+                        .name(productReq.getName())
+                        .description(productReq.getDescription())
+                        .price(productReq.getPrice())
+                        .imageUrl(productReq.getImageUrl())
+                        .store(savedStore)
+                        .preparationTime(productReq.getPreparationTime())
+                        .available(true)
+                        .active(true)
+                        .build();
+                productRepository.save(product);
+            });
+        }
+
+        log.info("Vendedor criado com sucesso - ID: {}", savedSeller.getId());
+        return SellerResponse.fromEntity(savedSeller);
+    }
+
+    @Transactional
+    public void rejectSellerApplication(Long applicationId, String reason) {
+        log.info("Rejeitando solicitações {} - Motivo: {}", applicationId, reason);
+    }
+
+    @Transactional(readOnly = true)
+    public List<StoreResponse> getAllStores() {
+        return storeRepository.findAll().stream()
+                .map(StoreResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void suspendStore(Long storeId, String reason) {
+        Store store = findStoreById(storeId);
+        store.deactivate();
+        storeRepository.save(store);
+        log.info("Loja {} suspensa. Motivo: {}", storeId, reason);
+    }
+
+    @Transactional
+    public ProductResponse addProductToStore(Long storeId, CreateProductRequest request) {
+        Store store = findStoreById(storeId);
+
+        Product product = Product.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .price(request.getPrice())
+                .imageUrl(request.getImageUrl())
+                .store(store)
+                .preparationTime(request.getPreparationTime())
+                .available(true)
+                .active(true)
+                .build();
+
+        Product saved = productRepository.save(product);
+        log.info("Produto {} adicionado à loja {} pelo admin", saved.getId(), storeId);
+
+        return ProductResponse.fromEntity(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public PlatformRevenueResponse calculatePlatformRevenue() {
+        List<Order> completedOrders = orderRepository.findByStatus(StatusOrder.DELIVERED);
+
+        BigDecimal totalSalesValue = completedOrders.stream()
+                .map(Order::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal platformFee = totalSalesValue.multiply(PLATFORM_FEE_PERCENTAGE)
+                .setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal sellersRevenue = totalSalesValue.subtract(platformFee);
+
+        BigDecimal averageFeePerOrder = completedOrders.isEmpty()
+                ? BigDecimal.ZERO
+                : platformFee.divide(BigDecimal.valueOf(completedOrders.size()), 2, RoundingMode.HALF_UP);
+
+        log.info("Receita da plataforma calculada: R$ {} (4% de R$ {})", platformFee, totalSalesValue
+        );
+
+        return PlatformRevenueResponse.builder()
+                .totalSalesValue(totalSalesValue)
+                .platformFee(platformFee)
+                .sellersRevenue(sellersRevenue)
+                .totalCompletedOrders(completedOrders.size())
+                .averageFeePerOrder(averageFeePerOrder)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public AllUsersResponse getAllUsers() {
+        List<Customer> customers = customerRepository.findAll();
+        List<Seller> sellers = sellerRepository.findAll();
+
+        List<CustomerResponse> customerResponses = customers.stream()
+                .map(CustomerResponse::fromEntity)
+                .collect(Collectors.toList());
+
+        List<SellerResponse> sellerResponses = sellers.stream()
+                .map(SellerResponse::fromEntity)
+                .collect(Collectors.toList());
+
+        int activeUsers = (int) customers.stream().filter(User::isActive).count() + (int) sellers.stream().filter(User::isActive).count();
+
+        return AllUsersResponse.builder()
+                .customers(customerResponses)
+                .sellers(sellerResponses)
+                .totalCustomers(customers.size())
+                .totalSellers(sellers.size())
+                .totalActiveUsers(activeUsers)
+                .build();
+    }
+
+    @Transactional
+    public void banCustomer(Long customerId, String reason) {
+        Customer customer = customerRepository.findById(customerId)
+                .orElseThrow(() -> new BusinessException("Cliente não encontrado"));
+
+        customer.disable();
+        customerRepository.save(customer);
+        log.warn("Cliente {} banido. Motivo: {}", customerId, reason);
+    }
+
+    @Transactional
+    public void banSeller(Long sellerId, String reason) {
+        Seller seller = sellerRepository.findById(sellerId)
+                .orElseThrow(() -> new BusinessException("Vendedor não encontrado"));
+
+        seller.disable();
+        sellerRepository.save(seller);
+
+        if (seller.getStore() != null) {
+            seller.getStore().deactivate();
+            storeRepository.save(seller.getStore());
+        }
+
+        log.warn("Vendedor {} banido e loja suspensa. Motivo: {}", sellerId, reason);
+    }
 
     @Transactional
     public StoreResponse createStoreAsAdmin(Long adminId, CreateStoreRequest request) {
@@ -325,15 +514,20 @@ public class AdminService {
                 .collect(Collectors.toList());
     }
 
-    private Admin findAdminById(Long adminId) {
-        return adminRepository.findById(adminId)
-                .orElseThrow(() -> new IllegalArgumentException("Admin não encontrado"));
-    }
-
     private LocalTime parseTime(String time) {
         if (time == null || time.isBlank()) {
             return null;
         }
         return LocalTime.parse(time);
+    }
+
+    private Admin findAdminById(Long adminId) {
+        return adminRepository.findById(adminId)
+                .orElseThrow(() -> new BusinessException("Admin não encontrado"));
+    }
+
+    private Store findStoreById(Long storeId) {
+        return storeRepository.findById(storeId)
+                .orElseThrow(() -> new BusinessException("Loja não encontrada"));
     }
 }
