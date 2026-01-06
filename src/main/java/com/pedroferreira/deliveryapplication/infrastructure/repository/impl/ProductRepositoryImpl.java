@@ -1,9 +1,10 @@
-package com.pedroferreira.deliveryapplication.infrastructure.repository;
+package com.pedroferreira.deliveryapplication.infrastructure.repository.impl;
 
 import com.pedroferreira.deliveryapplication.domain.entity.Product;
 import com.pedroferreira.deliveryapplication.domain.repository.ProductRepository;
 import com.pedroferreira.deliveryapplication.infrastructure.persistence.entity.ProductJpaEntity;
 import com.pedroferreira.deliveryapplication.infrastructure.persistence.entity.StoreJpaEntity;
+import com.pedroferreira.deliveryapplication.infrastructure.repository.mapper.ProductMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -18,10 +19,11 @@ public class ProductRepositoryImpl implements ProductRepository {
 
     private final ProductJpaRepositorySpring jpaRepository;
     private final StoreJpaRepositorySpring storeJpaRepository;
+    private final ProductMapper mapper;
 
     @Override
     public Product save(Product product) {
-        ProductJpaEntity jpaEntity = ProductJpaEntity.fromDomain(product);
+        ProductJpaEntity jpaEntity = mapper.toJpaEntity(product);
 
         if (product.getStore() != null && product.getStore().getId() != null) {
             StoreJpaEntity store = storeJpaRepository.findById(product.getStore().getId())
@@ -30,40 +32,40 @@ public class ProductRepositoryImpl implements ProductRepository {
         }
 
         ProductJpaEntity saved = jpaRepository.save(jpaEntity);
-        return saved.toDomain();
+        return mapper.toDomain(saved);
     }
 
     @Override
     public Optional<Product> findById(Long id) {
         return jpaRepository.findById(id)
-                .map(ProductJpaEntity::toDomain);
+                .map(mapper::toDomain);
     }
 
     @Override
     public List<Product> findAll() {
         return jpaRepository.findAll().stream()
-                .map(ProductJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Product> findByStoreId(Long storeId) {
         return jpaRepository.findByStoreId(storeId).stream()
-                .map(ProductJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Product> findByStoreIdAndAvailableTrue(Long storeId) {
         return jpaRepository.findByStoreIdAndAvailableTrue(storeId).stream()
-                .map(ProductJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Product> findByStoreIdAndActiveTrue(Long storeId) {
         return jpaRepository.findByStoreIdAndActiveTrue(storeId).stream()
-                .map(ProductJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 

@@ -1,8 +1,9 @@
-package com.pedroferreira.deliveryapplication.infrastructure.repository;
+package com.pedroferreira.deliveryapplication.infrastructure.repository.impl;
 
 import com.pedroferreira.deliveryapplication.domain.entity.Customer;
 import com.pedroferreira.deliveryapplication.domain.repository.CustomerRepository;
 import com.pedroferreira.deliveryapplication.infrastructure.persistence.entity.CustomerJpaEntity;
+import com.pedroferreira.deliveryapplication.infrastructure.repository.mapper.CustomerMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -16,30 +17,31 @@ import java.util.stream.Collectors;
 public class CustomerRepositoryImpl implements CustomerRepository {
 
     private final CustomerJpaRepositoryString jpaRepository;
+    private final CustomerMapper mapper;
 
     @Override
     public Customer save(Customer customer) {
-        CustomerJpaEntity jpaEntity = CustomerJpaEntity.fromDomain(customer);
+        CustomerJpaEntity jpaEntity = mapper.toJpaEntity(customer);
         CustomerJpaEntity saved = jpaRepository.save(jpaEntity);
-        return saved.toDomain();
+        return mapper.toDomain(saved);
     }
 
     @Override
     public Optional<Customer> findById(Long id) {
         return jpaRepository.findById(id)
-                .map(CustomerJpaEntity::toDomain);
+                .map(mapper::toDomain);
     }
 
     @Override
     public Optional<Customer> findByEmail(String email) {
         return jpaRepository.findByEmail(email)
-                .map(CustomerJpaEntity::toDomain);
+                .map(mapper::toDomain);
     }
 
     @Override
     public Optional<Customer> findByCpf(String cpf) {
         return jpaRepository.findByCpf(cpf)
-                .map(CustomerJpaEntity::toDomain);
+                .map(mapper::toDomain);
     }
 
     @Override
@@ -50,20 +52,20 @@ public class CustomerRepositoryImpl implements CustomerRepository {
     @Override
     public Optional<Customer> findByOauthProviderAndOauthId(String provider, String oauthId) {
         return jpaRepository.findByOauthProviderAndOauthId(provider, oauthId)
-                .map(CustomerJpaEntity::toDomain);
+                .map(mapper::toDomain);
     }
 
     @Override
     public List<Customer> findAll() {
         return jpaRepository.findAll().stream()
-                .map(CustomerJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Customer> findByActiveTrue() {
         return jpaRepository.findByActiveTrue().stream()
-                .map(CustomerJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 

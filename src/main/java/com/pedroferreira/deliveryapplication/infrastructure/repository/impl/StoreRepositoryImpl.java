@@ -1,8 +1,9 @@
-package com.pedroferreira.deliveryapplication.infrastructure.repository;
+package com.pedroferreira.deliveryapplication.infrastructure.repository.impl;
 
 import com.pedroferreira.deliveryapplication.domain.entity.Store;
 import com.pedroferreira.deliveryapplication.domain.repository.StoreRespository;
 import com.pedroferreira.deliveryapplication.infrastructure.persistence.entity.StoreJpaEntity;
+import com.pedroferreira.deliveryapplication.infrastructure.repository.mapper.StoreMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,51 +19,52 @@ import java.util.stream.Collectors;
 public class StoreRepositoryImpl implements StoreRespository {
 
     private final StoreJpaRepositorySpring jpaRepository;
+    private final StoreMapper mapper;
 
     @Override
     public Store save(Store store) {
-        StoreJpaEntity jpaEntity = StoreJpaEntity.fromDomain(store);
+        StoreJpaEntity jpaEntity = mapper.toJpaEntity(store);
         StoreJpaEntity saved = jpaRepository.save(jpaEntity);
-        return saved.toDomain();
+        return mapper.toDomain(saved);
     }
 
     @Override
     public Optional<Store> findById(Long id) {
         return jpaRepository.findById(id)
-                .map(StoreJpaEntity::toDomain);
+                .map(mapper::toDomain);
     }
 
     @Override
     public Optional<Store> findByEmail(String email) {
         return jpaRepository.findByEmail(email)
-                .map(StoreJpaEntity::toDomain);
+                .map(mapper::toDomain);
     }
 
     @Override
     public List<Store> findAll() {
         return jpaRepository.findAll().stream()
-                .map(StoreJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Store> findByActiveTrue() {
         return jpaRepository.findByActiveTrue().stream()
-                .map(StoreJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Store> findByActiveTrueAndOpenTrue() {
         return jpaRepository.findByActiveTrueAndOpenTrue().stream()
-                .map(StoreJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Store> findByCategory(String category) {
         return jpaRepository.findByCategory(category).stream()
-                .map(StoreJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 

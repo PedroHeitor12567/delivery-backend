@@ -1,8 +1,9 @@
-package com.pedroferreira.deliveryapplication.infrastructure.repository;
+package com.pedroferreira.deliveryapplication.infrastructure.repository.impl;
 
 import com.pedroferreira.deliveryapplication.domain.entity.Admin;
 import com.pedroferreira.deliveryapplication.domain.repository.AdminRepository;
 import com.pedroferreira.deliveryapplication.infrastructure.persistence.entity.AdminJpaEntity;
+import com.pedroferreira.deliveryapplication.infrastructure.repository.mapper.AdminMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -14,25 +15,27 @@ import java.util.stream.Collectors;
 @Repository
 @RequiredArgsConstructor
 public class AdminRepositoryImpl implements AdminRepository {
+
     private final AdminJpaRepositorySpring jpaRepository;
+    private final AdminMapper mapper;
 
     @Override
     public Admin save(Admin admin) {
-        AdminJpaEntity jpaEntity = AdminJpaEntity.fromDomain(admin);
+        AdminJpaEntity jpaEntity = mapper.toJpaEntity(admin);
         AdminJpaEntity saved = jpaRepository.save(jpaEntity);
-        return saved.toDomain();
+        return mapper.toDomain(saved);
     }
 
     @Override
     public Optional<Admin> findById(Long id) {
         return jpaRepository.findById(id)
-                .map(AdminJpaEntity::toDomain);
+                .map(mapper::toDomain);
     }
 
     @Override
     public Optional<Admin> findByEmail(String email) {
         return jpaRepository.findByEmail(email)
-                .map(AdminJpaEntity::toDomain);
+                .map(mapper::toDomain);
     }
 
     @Override
@@ -43,21 +46,21 @@ public class AdminRepositoryImpl implements AdminRepository {
     @Override
     public List<Admin> findAll() {
         return jpaRepository.findAll().stream()
-                .map(AdminJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Admin> findByActiveTrue() {
         return jpaRepository.findByActiveTrue().stream()
-                .map(AdminJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Admin> findByFullAccessTrue() {
         return jpaRepository.findByFullAccessTrue().stream()
-                .map(AdminJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 

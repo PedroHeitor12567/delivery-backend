@@ -1,4 +1,4 @@
-package com.pedroferreira.deliveryapplication.infrastructure.repository;
+package com.pedroferreira.deliveryapplication.infrastructure.repository.impl;
 
 import com.pedroferreira.deliveryapplication.domain.entity.Order;
 import com.pedroferreira.deliveryapplication.domain.enuns.StatusOrder;
@@ -7,6 +7,7 @@ import com.pedroferreira.deliveryapplication.infrastructure.persistence.entity.C
 import com.pedroferreira.deliveryapplication.infrastructure.persistence.entity.OrderJpaEntity;
 import com.pedroferreira.deliveryapplication.infrastructure.persistence.entity.ProductJpaEntity;
 import com.pedroferreira.deliveryapplication.infrastructure.persistence.entity.StoreJpaEntity;
+import com.pedroferreira.deliveryapplication.infrastructure.repository.mapper.OrderMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -24,10 +25,11 @@ public class OrderRepositoryImpl implements OrderRespository {
     private final CustomerJpaRepositoryString customerJpaRepository;
     private final StoreJpaRepositorySpring storeJpaRepository;
     private final ProductJpaRepositorySpring productJpaRepository;
+    private final OrderMapper mapper;
 
     @Override
     public Order save(Order order) {
-        OrderJpaEntity jpaEntity = OrderJpaEntity.fromDomain(order);
+        OrderJpaEntity jpaEntity = mapper.toJpaEntity(order);
 
         if (order.getCustomer() != null && order.getCustomer().getId() != null) {
             CustomerJpaEntity customer = customerJpaRepository.findById(order.getCustomer().getId())
@@ -58,40 +60,40 @@ public class OrderRepositoryImpl implements OrderRespository {
         }
         OrderJpaEntity saved = jpaRepository.save(jpaEntity);
 
-        return saved.toDomain();
+        return mapper.toDomain(saved);
     }
 
     @Override
     public Optional<Order> findById(Long id) {
         return jpaRepository.findById(id)
-                .map(OrderJpaEntity::toDomain);
+                .map(mapper::toDomain);
     }
 
     @Override
     public List<Order> findAll() {
         return jpaRepository.findAll().stream()
-                .map(OrderJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Order> findByCustomerId(Long customerId) {
         return jpaRepository.findByCustomerId(customerId).stream()
-                .map(OrderJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Order> findByStoreId(Long storeId) {
         return jpaRepository.findByStoreId(storeId).stream()
-                .map(OrderJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<Order> findByStatus(StatusOrder status) {
         return jpaRepository.findByStatus(status).stream()
-                .map(OrderJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
@@ -103,7 +105,7 @@ public class OrderRepositoryImpl implements OrderRespository {
     @Override
     public List<Order> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end) {
         return jpaRepository.findByCreatedAtBetween(start, end).stream()
-                .map(OrderJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 

@@ -1,8 +1,9 @@
-package com.pedroferreira.deliveryapplication.infrastructure.repository;
+package com.pedroferreira.deliveryapplication.infrastructure.repository.impl;
 
 import com.pedroferreira.deliveryapplication.domain.entity.Seller;
 import com.pedroferreira.deliveryapplication.domain.repository.SellerRepository;
 import com.pedroferreira.deliveryapplication.infrastructure.persistence.entity.SellerJpaEntity;
+import com.pedroferreira.deliveryapplication.infrastructure.repository.mapper.SellerMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -16,24 +17,25 @@ import java.util.stream.Collectors;
 public class SellerRepositoryImpl implements SellerRepository {
 
     private final SellerJpaRepositorySpring jpaRepository;
+    private final SellerMapper mapper;
 
     @Override
     public Seller save(Seller seller) {
-        SellerJpaEntity jpaEntity = SellerJpaEntity.fromDomain(seller);
+        SellerJpaEntity jpaEntity = mapper.toJpaEntity(seller);
         SellerJpaEntity saved = jpaRepository.save(jpaEntity);
-        return saved.toDomain();
+        return mapper.toDomain(saved);
     }
 
     @Override
     public Optional<Seller> findById(Long id) {
         return jpaRepository.findById(id)
-                .map(SellerJpaEntity::toDomain);
+                .map(mapper::toDomain);
     }
 
     @Override
     public Optional<Seller> findByEmail(String email) {
         return jpaRepository.findByEmail(email)
-                .map(SellerJpaEntity::toDomain);
+                .map(mapper::toDomain);
     }
 
     @Override
@@ -44,13 +46,13 @@ public class SellerRepositoryImpl implements SellerRepository {
     @Override
     public Optional<Seller> findByStoreId(Long storeId) {
         return jpaRepository.findByStoreId(storeId)
-                .map(SellerJpaEntity::toDomain);
+                .map(mapper::toDomain);
     }
 
     @Override
     public List<Seller> findAll() {
         return jpaRepository.findAll().stream()
-                .map(SellerJpaEntity::toDomain)
+                .map(mapper::toDomain)
                 .collect(Collectors.toList());
     }
 
