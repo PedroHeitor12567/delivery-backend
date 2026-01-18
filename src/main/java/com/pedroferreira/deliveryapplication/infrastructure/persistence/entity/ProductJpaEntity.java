@@ -43,5 +43,5 @@ public class ProductJpaEntity {
     private Integer preparationTime;
 
     @Column(nullable = false)
-    private Boolean active;
+    private Boolean active = true;
 }

@@ -1,49 +1,176 @@
 package com.pedroferreira.deliveryapplication.application.service;
 
+import com.pedroferreira.deliveryapplication.application.dto.requests.CreateOrderRequest;
 import com.pedroferreira.deliveryapplication.application.dto.response.OrderResponse;
-import com.pedroferreira.deliveryapplication.application.usecase.BusinessException;
-import com.pedroferreira.deliveryapplication.application.usecase.ResourceNotFoundException;
-import com.pedroferreira.deliveryapplication.domain.entity.Customer;
-import com.pedroferreira.deliveryapplication.domain.entity.Order;
+import com.pedroferreira.deliveryapplication.domain.entity.*;
+import com.pedroferreira.deliveryapplication.domain.enuns.EventRequest;
 import com.pedroferreira.deliveryapplication.domain.enuns.StatusOrder;
+import com.pedroferreira.deliveryapplication.domain.enuns.UserRole;
 import com.pedroferreira.deliveryapplication.domain.repository.CustomerRepository;
 import com.pedroferreira.deliveryapplication.domain.repository.OrderRespository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
+import com.pedroferreira.deliveryapplication.domain.repository.ProductRepository;
+import com.pedroferreira.deliveryapplication.domain.repository.StoreRespository;
+import com.pedroferreira.deliveryapplication.infrastructure.repository.*;
 import org.springframework.transaction.annotation.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class OrderService {
 
     private final OrderRespository orderRepository;
     private final CustomerRepository customerRepository;
+    private final StoreRespository storeRepository;
+    private final ProductRepository productRepository;
+    @Transactional
+    public OrderResponse createOrder(CreateOrderRequest request) {
+        Customer customer = customerRepository.findById(request.getCustomerId())
+                .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
+
+        if (!customer.isActive()) {
+            throw new IllegalStateException("Cliente inativo");
+        }
+
+        Store store = storeRepository.findById(request.getStoreId())
+                .orElseThrow(() -> new IllegalArgumentException("Loja não encontrada"));
+
+        if (!store.isOpenNow()) {
+            throw new IllegalStateException("Loja está fechada no momento");
+        }
+
+        BigDecimal deliveryFee = store.calculateDeliveryFee(request.getDeliveyDistanceKm());
+
+        Order order = Order.builder()
+                .customer(customer)
+                .store(store)
+                .deliveryAddress(request.getDeliveryAddress())
+                .deliveryDistanceKm(BigDecimal.valueOf(request.getDeliveyDistanceKm()))
+                .deliveryFee(deliveryFee)
+                .discount(BigDecimal.ZERO)
+                .observations(request.getObservations())
+                .build();
+
+        request.getItems().forEach(itemDto -> {
+            Product product = productRepository.findById(itemDto.getProductId())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Produto não encontrado: " + itemDto.getProductId()
+                    ));
+
+            ItemOrder item = ItemOrder.builder()
+                    .product(product)
+                    .quantity(itemDto.getQuantity())
+                    .unitPrice(product.getPrice())
+                    .discount(BigDecimal.ZERO)
+                    .observations(itemDto.getObservations())
+                    .build();
+
+            order.addItem(item);
+        });
+
+        order.validate();
+
+        Order saveOrder = orderRepository.save(order);
+        customer.addOrder(saveOrder);
+
+        return OrderResponse.fromDomain(saveOrder);
+    }
+
+    @Transactional
+    public OrderResponse confrimOrder(Long orderId, Long sellerId) {
+        Order order = findByOrderId(orderId);
+
+        order.execute(EventRequest.CONFIRM, UserRole.SELLER);
+
+        Order updateOrder = orderRepository.save(order);
+        return OrderResponse.fromDomain(updateOrder);
+    }
+
+    @Transactional
+    public OrderResponse refuseOrder(Long orderId, String reason) {
+        Order order = findByOrderId(orderId);
+
+        order.setCancellationReason(reason);
+        order.execute(EventRequest.REFUSE, UserRole.SELLER);
+
+        Order updateOrder = orderRepository.save(order);
+        return OrderResponse.fromDomain(updateOrder);
+    }
+
+    @Transactional
+    public OrderResponse markOrderReady(Long orderId) {
+        Order order = findByOrderId(orderId);
+
+        order.execute(EventRequest.MARK_POINT, UserRole.SELLER);
+
+        Order updateOrder = orderRepository.save(order);
+        return OrderResponse.fromDomain(updateOrder);
+    }
+
+    @Transactional
+    public OrderResponse exitForDelivery(Long orderId) {
+        Order order = findByOrderId(orderId);
+
+        order.execute(EventRequest.EXIT_FOR_DELIVERY, UserRole.SYSTEM);
+
+        Order updateOrder = orderRepository.save(order);
+        return OrderResponse.fromDomain(updateOrder);
+    }
+
+    @Transactional
+    public OrderResponse deliverOrder(Long orderId) {
+        Order order = findByOrderId(orderId);
+
+        order.execute(EventRequest.DELIVER, UserRole.SYSTEM);
+
+        Store store = order.getStore();
+        store.incrementSales();
+        storeRepository.save(store);
+
+        Order updateOrder = orderRepository.save(order);
+        return OrderResponse.fromDomain(updateOrder);
+    }
+
+    @Transactional
+    public OrderResponse cancelOrder(Long orderId, Long customerId, String reason) {
+        Order order = findByOrderId(orderId);
+
+        if (!order.getCustomer().getId().equals(customerId)) {
+            throw new IllegalArgumentException("Pedido não pertence ao cliente");
+        }
+
+        if (!order.canBeCanceled()) {
+            throw new IllegalStateException("Pedido não pode ser cancelado nesse momento");
+        }
+
+        order.cancel(reason);
+
+        Order updateOrder = orderRepository.save(order);
+        return OrderResponse.fromDomain(updateOrder);
+    }
 
     @Transactional(readOnly = true)
-    public OrderResponse getOrderById(Long id) {
-        Order order = findOrderById(id);
+    public OrderResponse getOrderById(Long orderId) {
+        Order order = findByOrderId(orderId);
         return OrderResponse.fromDomain(order);
     }
 
     @Transactional(readOnly = true)
     public List<OrderResponse> getOrdersByCustomer(Long customerId) {
-        Customer customer = findCustomerById(customerId);
-
-        List<Order> orders = orderRepository.findByCustomerId(customerId);
-        return orders.stream()
+        return orderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId)
+                .stream()
                 .map(OrderResponse::fromDomain)
                 .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<OrderResponse> getOrdersByStore(Long storeId) {
-        List<Order> orders = orderRepository.findByStoreId(storeId);
-        return orders.stream()
+        return orderRepository.findByStoreId(storeId)
+                .stream()
                 .map(OrderResponse::fromDomain)
                 .collect(Collectors.toList());
     }
@@ -57,62 +184,22 @@ public class OrderService {
                 StatusOrder.LEFT_FOR_DELIVERY
         );
 
-        List<Order> orders = orderRepository.findByStoreId(storeId).stream()
-                .filter(order -> activeStatuses.contains(order.getStatus()))
-                .collect(Collectors.toList());
-
-        return orders.stream()
+        return orderRepository.findByStoreId(storeId)
+                .stream()
                 .map(OrderResponse::fromDomain)
                 .collect(Collectors.toList());
     }
 
-    @Transactional
-    public OrderResponse cancelOrder(Long orderId, Long customerId, String reason) {
-        Order order = findOrderById(orderId);
-        Customer customer = findCustomerById(customerId);
-
-        if (!order.getCustomer().getId().equals(customerId)) {
-            throw new BusinessException("Este pedido não pertence a você");
-        }
-
-        if (!customer.isActive()) {
-            throw new BusinessException("Cliente inativo não pode cancelar pedidos");
-        }
-
-        order.cancel(reason);
-        Order updated = orderRepository.save(order);
-
-        log.info("Pedido {} cancelado pelo cliente {}", orderId, customerId);
-        return OrderResponse.fromDomain(updated);
+    @Transactional(readOnly = true)
+    public List<OrderResponse> getReadyOrders() {
+        return orderRepository.findByStatusOrderByCreatedAtAsc(StatusOrder.READY)
+                .stream()
+                .map(OrderResponse::fromDomain)
+                .collect(Collectors.toList());
     }
 
-    @Transactional
-    public OrderResponse exitForDelivery(Long orderId) {
-        Order order = findOrderById(orderId);
-        order.exitForDelivery();
-        Order updated = orderRepository.save(order);
-
-        log.info("Pedido {} saiu para entrega", orderId);
-        return OrderResponse.fromDomain(updated);
-    }
-
-    @Transactional
-    public OrderResponse deliverOrder(Long orderId) {
-        Order order = findOrderById(orderId);
-        order.deliver();
-        Order updated = orderRepository.save(order);
-
-        log.info("Pedido {} entregue com sucesso", orderId);
-        return OrderResponse.fromDomain(updated);
-    }
-
-    private Order findOrderById(Long id) {
-        return orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado: " + id));
-    }
-
-    private Customer findCustomerById(Long id) {
-        return customerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado: " + id));
+    private Order findByOrderId(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado"));
     }
 }

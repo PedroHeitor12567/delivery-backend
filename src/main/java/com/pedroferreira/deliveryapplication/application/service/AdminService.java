@@ -33,7 +33,7 @@ public class AdminService {
     private final ProductRepository productRepository;
     private final SellerRepository sellerRepository;
 
-    private static final BigDecimal PLATFORM_FEE_PERCENTAGE = BigDecimal.valueOf(0.04);
+    private static final BigDecimal PLATFORM_FEE_PERCENTAGE = BigDecimal.valueOf(0.08);
 
     @Transactional(readOnly = true)
     public List<SellerApplicationResponse> getPendingApplications() {

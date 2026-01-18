@@ -40,7 +40,7 @@ public class CustomerJpaEntity{
     private String address;
 
     @Column(nullable = false)
-    private Boolean active;
+    private Boolean active = true;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
