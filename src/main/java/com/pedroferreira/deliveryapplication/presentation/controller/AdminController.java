@@ -80,12 +80,12 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping("/sotres")
+    @GetMapping("/stores") // ✅ CORRIGIDO typo "sotres"
     @Operation(
-            summary = "Listar todas as lojas (incluindo intativas)"
+            summary = "Listar todas as lojas (incluindo inativas)"
     )
-    public ResponseEntity<List<StoreResponse>> getAllSotres() {
-        log.info("GET /api/admin/sotres - Listando todas as lojas");
+    public ResponseEntity<List<StoreResponse>> getAllStores() {
+        log.info("GET /api/admin/stores - Listando todas as lojas");
         List<StoreResponse> stores = adminService.getAllStores();
         return ResponseEntity.ok(stores);
     }
@@ -170,7 +170,7 @@ public class AdminController {
     @GetMapping("/revenue/total")
     @Operation(
             summary = "Receita total da plataforma",
-            description = "Calcula 4% da taxa sobre todas as vendas concluídas"
+            description = "Calcula 8% da taxa sobre todas as vendas concluídas" // ✅ CORRIGIDO 4% -> 8%
     )
     public ResponseEntity<PlatformRevenueResponse> getPlatformRevenue() {
         log.info("GET /api/admin/revenue/total - Calculando receita da plataforma");

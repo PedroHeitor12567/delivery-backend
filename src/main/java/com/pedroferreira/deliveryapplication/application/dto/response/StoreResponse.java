@@ -47,11 +47,12 @@ public class StoreResponse {
                 .address(store.getAddress())
                 .category(store.getCategory())
                 .openingTime(store.getOpeningTime())
-                .openingTime(store.getClosingTime())
+                .closingTime(store.getClosingTime()) // ✅ CORRIGIDO
                 .deliveryFeePerKM(store.getDeliveryFeePerKm())
                 .baseDeliveryFee(store.getBaseDeliveryFee())
                 .minimumOrder(store.getMinimumOrder())
                 .active(store.getActive())
+                .open(store.getOpen())
                 .rating(store.getRating())
                 .totalRatings(store.getTotalRatings())
                 .totalSales(store.getTotalSales())
