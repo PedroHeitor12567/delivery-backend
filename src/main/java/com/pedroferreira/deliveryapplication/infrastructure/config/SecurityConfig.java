@@ -15,32 +15,27 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
-    // Pode manter o filtro, ele não vai bloquear nada
-    private final JwtAuthenticationFilter jwtAuthFilter;
-
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            JwtAuthenticationFilter jwtAuthFilter
+    ) throws Exception {
+
         http
-                // ❌ Desativa CSRF
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // 🔓 LIBERA TUDO
                 .authorizeHttpRequests(auth -> auth
                         .anyRequest().permitAll()
                 )
 
-                // ❌ Sem sessão
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // (Opcional) mantém o filtro JWT
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 
-                // Necessário para H2 Console
                 .headers(headers ->
                         headers.frameOptions(frameOptions -> frameOptions.disable())
                 );
@@ -53,3 +48,4 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
+
