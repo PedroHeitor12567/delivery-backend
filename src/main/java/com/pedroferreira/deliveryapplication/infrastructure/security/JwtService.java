@@ -4,7 +4,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SignatureException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +66,7 @@ public class JwtService {
                 .setSubject(username)
                 .setIssuedAt(new Date(currentTimeMillis))
                 .setExpiration(new Date(currentTimeMillis + expiration))
-                .signWith(SignatureAlgorithm.HS256, getSignInKey()) // ✅ LEGACY: signWith aceita 2 parâmetros
+                .signWith(getSignInKey()) // ✅ LEGACY: signWith aceita 2 parâmetros
                 .compact();
     }
 
@@ -124,7 +123,7 @@ public class JwtService {
                 .parser()
                 .verifyWith(getSignInKey())
                 .build()
-                .parseSignedClaims(token)
+                .parseClaimsJws(token)
                 .getPayload();
     }
 
