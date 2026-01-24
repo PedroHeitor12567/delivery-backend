@@ -1,50 +1,22 @@
+version: "3.9"
+
 services:
-  # PostgreSQL Database
   postgres:
-    image: postgres:16-alpine
-    container_name: delivery-postgres
+    image: postgres:16
+    container_name: postgres
     environment:
       POSTGRES_DB: deliverydb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      PGDATA: /var/lib/postgresql/data/pgdata
-    ports:
-      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
-    networks:
-      - delivery-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # PgAdmin (Opcional - Interface gráfica)
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: delivery-pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@delivery.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
-      - "5050:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
+      - "5433:5432"
     networks:
       - delivery-network
-    depends_on:
-      - postgres
-    restart: unless-stopped
 
 volumes:
   postgres_data:
-    driver: local
-  pgadmin_data:
-    driver: local
 
 networks:
   delivery-network:
