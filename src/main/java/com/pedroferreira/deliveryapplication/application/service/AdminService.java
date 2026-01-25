@@ -32,6 +32,7 @@ public class AdminService {
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
     private final SellerRepository sellerRepository;
+    private final CityRepository cityRepository;
 
     private static final BigDecimal PLATFORM_FEE_PERCENTAGE = BigDecimal.valueOf(0.08);
 
@@ -469,6 +470,143 @@ public class AdminService {
                 .activeStores(activeStores)
                 .averageOrderValue(avgOrderValue)
                 .cancellationRate(cancellationRate)
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public List<OrdemDetailResponse> getAllOrdersWithDetails() {
+        List<Order> orders = orderRepository.findAll();
+
+        return orders.stream().map(order -> {
+            List<OrderItemDetail> items = order.getItems().stream()
+                    .map(item -> OrderItemDetail.builder()
+                            .productName(item.getProduct().getName())
+                            .quantity(item.getQuantity())
+                            .unitPrice(item.getUnitPrice())
+                            .subtotal(item.getSubtotal())
+                            .build())
+                    .collect(Collectors.toList());
+
+            return OrdemDetailResponse.builder()
+                    .orderId(order.getId())
+                    .customerName(order.getCustomer().getUsername())
+                    .customerEmail(order.getCustomer().getEmail())
+                    .customerPhone(order.getCustomer().getPhone())
+                    .storeName(order.getStore().getName())
+                    .storeCategory(order.getStore().getCategory())
+                    .cityName(order.getStore().getCity())
+                    .deliveryAddress(order.getDeliveryAddress())
+                    .totalAmount(order.getTotalAmount())
+                    .deliveryFee(order.getDeliveryFee())
+                    .status(order.getStatus().name())
+                    .createdAt(order.getCreatedAt().toString())
+                    .deliveredAt(order.getDeliveredAt() != null ? order.getDeliveredAt().toString() : null)
+                    .items(items)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<SalesByCityResponse> getSalesByCity() {
+        List<City> cities = cityRepository.findByActiveTrue();
+
+        return cities.stream().map(city -> {
+            List<Store> cityStores = storeRepository.findByCityAndActiveTrue(city.getName());
+
+            List<Order> cityOrders = cityStores.stream()
+                    .flatMap(store -> orderRepository.findByStoreIdAndStatus(store.getId(), StatusOrder.DELIVERED).stream())
+                    .collect(Collectors.toList());
+
+            BigDecimal totalRevenue = cityOrders.stream()
+                    .map(Order::getTotalAmount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal platformRevenue = totalRevenue.multiply(PLATFORM_FEE_PERCENTAGE)
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            BigDecimal avgOrderValue = cityOrders.isEmpty()
+                    ? BigDecimal.ZERO
+                    : totalRevenue.divide(BigDecimal.valueOf(cityOrders.size()), 2, RoundingMode.HALF_UP);
+
+            return SalesByCityResponse.builder()
+                    .cityName(city.getName())
+                    .state(city.getState())
+                    .totalStores(cityStores.size())
+                    .totalOrders(cityOrders.size())
+                    .totalRevenue(totalRevenue)
+                    .platformRevenue(platformRevenue)
+                    .averageOrderValue(avgOrderValue)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<SalesByCityResponse> getSalesByCityFiltered(String cityName) {
+        City city = cityRepository.findByNameAndState(cityName, null)
+                .orElseThrow(() -> new BusinessException("Cidade não encontrada"));
+
+        List<Store> cityStores = storeRepository.findByCityAndActiveTrue(city.getName());
+
+        List<Order> cityOrders = cityStores.stream()
+                .flatMap(store -> orderRepository.findByStoreIdAndStatus(store.getId(), StatusOrder.DELIVERED).stream())
+                .collect(Collectors.toList());
+
+        BigDecimal totalRevenue = cityOrders.stream()
+                .map(Order::getTotalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal platformRevenue = totalRevenue.multiply(PLATFORM_FEE_PERCENTAGE)
+                .setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal avgOrderValue = cityOrders.isEmpty()
+                ? BigDecimal.ZERO
+                : totalRevenue.divide(BigDecimal.valueOf(cityOrders.size()), 2, RoundingMode.HALF_UP);
+
+        SalesByCityResponse response = SalesByCityResponse.builder()
+                .cityName(city.getName())
+                .state(city.getState())
+                .totalStores(cityStores.size())
+                .totalOrders(cityOrders.size())
+                .totalRevenue(totalRevenue)
+                .platformRevenue(platformRevenue)
+                .averageOrderValue(avgOrderValue)
+                .build();
+
+        return List.of(response);
+    }
+
+    @Transactional(readOnly = true)
+    public StoreComparisonResponse getStoresComparison(String cityName) {
+        List<Store> stores = cityName != null
+                ? storeRepository.findByCityAndActiveTrue(cityName)
+                : storeRepository.findByActiveTrue();
+
+        List<StoreComparisonItem> comparison = stores.stream().map(store -> {
+                    List<Order> storeOrders = orderRepository.findByStoreIdAndStatus(store.getId(), StatusOrder.DELIVERED);
+
+                    BigDecimal totalRevenue = storeOrders.stream()
+                            .map(Order::getTotalAmount)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                    BigDecimal platformFee = totalRevenue.multiply(PLATFORM_FEE_PERCENTAGE)
+                            .setScale(2, RoundingMode.HALF_UP);
+
+                    return StoreComparisonItem.builder()
+                            .storeId(store.getId())
+                            .storeName(store.getName())
+                            .cityName(store.getCity())
+                            .totalOrders(storeOrders.size())
+                            .totalRevenue(totalRevenue)
+                            .platformFee(platformFee)
+                            .rating(store.getRating())
+                            .build();
+                })
+                .sorted((s1, s2) -> s2.getTotalRevenue().compareTo(s1.getTotalRevenue()))
+                .collect(Collectors.toList());
+
+        return StoreComparisonResponse.builder()
+                .stores(comparison)
+                .period("Histórico Total")
                 .build();
     }
 
