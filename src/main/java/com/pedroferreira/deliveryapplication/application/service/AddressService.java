@@ -77,6 +77,13 @@ public class AddressService {
     }
 
     @Transactional(readOnly = true)
+    public List<AddressResponse> getCustomerAddressesByCity(Long customerId, Long cityId) {
+        return addressRepository.findByCustomerIdAndCityId(customerId, cityId).stream()
+                .map(AddressResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public AddressResponse getDefaultAddress(Long customerId) {
         Address address = addressRepository.findByCustomerIdAndIsDefaultTrue(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Endereço padrão não encontrado"));
