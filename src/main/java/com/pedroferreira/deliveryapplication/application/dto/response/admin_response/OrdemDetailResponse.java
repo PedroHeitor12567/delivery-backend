@@ -29,14 +29,3 @@ public class OrdemDetailResponse {
     private List<OrderItemDetail> items;
 }
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-class OrderItemDetail {
-    private String productName;
-    private Integer quantity;
-    private BigDecimal unitPrice;
-    private BigDecimal subtotal;
-}
-
