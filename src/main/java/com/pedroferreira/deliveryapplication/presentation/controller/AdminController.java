@@ -8,12 +8,14 @@ import com.pedroferreira.deliveryapplication.application.dto.response.admin_resp
 import com.pedroferreira.deliveryapplication.application.service.AdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,11 +25,13 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Administração", description = "Endpoints exclusivos para administradores")
+@SecurityRequirement(name = "bearerAuth")
 public class AdminController {
 
     private final AdminService adminService;
 
     @GetMapping("/applications/pending")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Listar solicitações pendentes",
             description = "Lista todos os clientes que solicitaram se tornar vendedores"
@@ -39,6 +43,7 @@ public class AdminController {
     }
 
     @PostMapping("/applications/{applicationId}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Aprovar solicitação de vendedor",
             description = "Admin aprova cliente para ser vendedor, cria loja e produtos iniciais"
@@ -54,6 +59,7 @@ public class AdminController {
     }
 
     @PostMapping("/applications/{applicationId}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Rejeitar solicitação de vendedor"
     )
@@ -67,6 +73,7 @@ public class AdminController {
     }
 
     @PostMapping("/stores")
+    @PreAuthorize("hasRole('ADMIN') and #request.adminId == authentication.principal.id")
     @Operation(
             summary = "Criar loja (Admin)",
             description = "Admin cria loja manualmente pra um vendedor"
@@ -80,7 +87,8 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping("/stores") // ✅ CORRIGIDO typo "sotres"
+    @GetMapping("/stores")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Listar todas as lojas (incluindo inativas)"
     )
@@ -91,6 +99,7 @@ public class AdminController {
     }
 
     @PutMapping("/stores/{id}/suspend")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Suspender loja"
     )
@@ -104,6 +113,7 @@ public class AdminController {
     }
 
     @PostMapping("/stores/{storeId}/products")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Adicionar produto a uma loja (Admin)"
     )
@@ -117,6 +127,7 @@ public class AdminController {
     }
 
     @GetMapping("/dashboard")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Dashboard geral do sistema"
     )
@@ -127,6 +138,7 @@ public class AdminController {
     }
 
     @GetMapping("/stats/system")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Estatísticas gerais do sistema"
     )
@@ -137,6 +149,7 @@ public class AdminController {
     }
 
     @GetMapping("/stats/stores")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Performance de todas as lojas"
     )
@@ -146,6 +159,7 @@ public class AdminController {
     }
 
     @GetMapping("/stats/customers/top")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Top clientes (maiores compradores)"
     )
@@ -158,6 +172,7 @@ public class AdminController {
     }
 
     @GetMapping("/stats/delivery")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Estatísticas de entregas"
     )
@@ -168,9 +183,10 @@ public class AdminController {
     }
 
     @GetMapping("/revenue/total")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Receita total da plataforma",
-            description = "Calcula 8% da taxa sobre todas as vendas concluídas" // ✅ CORRIGIDO 4% -> 8%
+            description = "Calcula 8% da taxa sobre todas as vendas concluídas"
     )
     public ResponseEntity<PlatformRevenueResponse> getPlatformRevenue() {
         log.info("GET /api/admin/revenue/total - Calculando receita da plataforma");
@@ -179,6 +195,7 @@ public class AdminController {
     }
 
     @GetMapping("/users/all")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Listar todos os usuários"
     )
@@ -189,6 +206,7 @@ public class AdminController {
     }
 
     @PutMapping("/users/customer/{id}/ban")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Banir cliente"
     )
@@ -202,6 +220,7 @@ public class AdminController {
     }
 
     @PutMapping("/users/seller/{id}/ban")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(
             summary = "Banir vendedor (suspende loja também)"
     )
@@ -212,5 +231,57 @@ public class AdminController {
         log.info("PUT /api/admin/users/seller/{}/ban - Banindo vendedor", id);
         adminService.banSeller(id, reason);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/orders/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Listar todos os pedidos com detalhes completos",
+            description = "Admin tem acesso a todos os pedidos com informações de clientes e lojas"
+    )
+    public ResponseEntity<List<OrdemDetailResponse>> getAllOrders() {
+        log.info("GET /api/admin/orders/all - Listando todos os pedidos");
+        List<OrdemDetailResponse> orders = adminService.getAllOrdersWithDetails();
+        return ResponseEntity.ok(orders);
+    }
+
+    @GetMapping("/sales/by-city")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Relatório de vendas por cidade",
+            description = "Histórico de vendas agrupado por cidade com receita da plataforma"
+    )
+    public ResponseEntity<List<SalesByCityResponse>> getSalesByCity() {
+        log.info("GET /api/admin/sales/by-city - Gerando relatório por cidade");
+        List<SalesByCityResponse> sales = adminService.getSalesByCity();
+        return ResponseEntity.ok(sales);
+    }
+
+    @GetMapping("/sales/by-city/{cityName}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Relatório de vendas filtrado por cidade",
+            description = "Vendas de uma cidade específica"
+    )
+    public ResponseEntity<List<SalesByCityResponse>> getSalesByCityFiltered(
+            @Parameter(description = "Nome da cidade") @PathVariable String cityName
+    ) {
+        log.info("GET /api/admin/sales/by-city/{} - Relatório da cidade", cityName);
+        List<SalesByCityResponse> sales = adminService.getSalesByCityFiltered(cityName);
+        return ResponseEntity.ok(sales);
+    }
+
+    @GetMapping("/stores/comparison")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(
+            summary = "Comparação de vendas entre lojas",
+            description = "Gráfico comparativo de performance das lojas"
+    )
+    public ResponseEntity<StoreComparisonResponse> getStoresComparison(
+            @Parameter(description = "Filtrar por cidade (opcional)") @RequestParam(required = false) String city
+    ) {
+        log.info("GET /api/admin/stores/comparison - Comparando lojas");
+        StoreComparisonResponse comparison = adminService.getStoresComparison(city);
+        return ResponseEntity.ok(comparison);
     }
 }

@@ -14,7 +14,12 @@ public interface StoreRespository {
     List<Store> findByActiveTrue();
     List<Store> findByActiveTrueAndOpenTrue();
     List<Store> findByCategory(String category);
-    List<Store> findByCityAndActiveTrue(String city);
+    List<Store> findByCityIdAndActiveTrue(Long cityId);
+    List<Store> findByCityIdAndActiveTrueAndOpenTrue(Long cityId);
+
+    @Deprecated
+    List<Store> findByCityAndActiveTrue(String cityName);
+
     List<Store> searchOpenStores(String search);
     List<Store> findAll();
     void delete(Store store);

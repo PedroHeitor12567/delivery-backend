@@ -8,24 +8,23 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Store - Domain Entity com Lombok
- */
+
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"products", "createdBy"})
+@ToString(exclude = {"products", "createdBy", "city"})
 public class Store {
 
     @EqualsAndHashCode.Include
     private Long id;
+
     private String name;
     private String description;
-    private String city;
-    private String state;
+
+    private City city;
 
     @Builder.Default
     private List<Product> products = new ArrayList<>();
@@ -57,15 +56,14 @@ public class Store {
 
     private Admin createdBy;
 
-    public Store(String name, String city, String state, String phone, String email,
+    public Store(String name, City city, String phone, String email,
                  String address, String category, BigDecimal deliveryFeePerKm,
                  BigDecimal baseDeliveryFee, BigDecimal minimumOrder) {
-        validateConstructorParams(name, city, state, phone, email, address, category,
+        validateConstructorParams(name, city, phone, email, address, category,
                 deliveryFeePerKm, baseDeliveryFee, minimumOrder);
 
         this.name = name;
         this.city = city;
-        this.state = state;
         this.phone = phone;
         this.email = email;
         this.address = address;
@@ -80,8 +78,6 @@ public class Store {
         this.totalRatings = 0;
         this.products = new ArrayList<>();
     }
-
-    // ==================== REGRAS DE NEGÓCIO ====================
 
     public BigDecimal calculateDeliveryFee(Double distanceKm) {
         if (distanceKm == null || distanceKm <= 0) {
@@ -125,7 +121,6 @@ public class Store {
     }
 
     public boolean isOpenNow() {
-        // Verificar se está ativa E aberta
         if (!Boolean.TRUE.equals(active)) {
             return false;
         }
@@ -134,7 +129,10 @@ public class Store {
             return false;
         }
 
-        // Verificar horários
+        if (city == null || !city.isActive()) {
+            return false;
+        }
+
         if (openingTime == null || closingTime == null) {
             return false;
         }
@@ -146,6 +144,9 @@ public class Store {
     public void openStore() {
         if (!Boolean.TRUE.equals(active)) {
             throw new IllegalStateException("Loja desativada não pode ser aberta");
+        }
+        if (city == null || !city.isActive()) {
+            throw new IllegalStateException("Não é possível abrir loja em cidade inativa");
         }
         this.open = true;
     }
@@ -163,20 +164,25 @@ public class Store {
         this.open = false;
     }
 
-    // ==================== VALIDAÇÕES ====================
+    public String getCityName() {
+        return city != null ? city.getName() : null;
+    }
 
-    private void validateConstructorParams(String name, String city, String state,
-                                           String phone, String email, String address,
+    public String getState() {
+        return city != null ? city.getState() : null;
+    }
+
+    private void validateConstructorParams(String name, City city,                                         String phone, String email, String address,
                                            String category, BigDecimal deliveryFeePerKm,
                                            BigDecimal baseDeliveryFee, BigDecimal minimumOrder) {
         if (name == null || name.isBlank()) {
             throw new IllegalArgumentException("Nome da loja é obrigatório");
         }
-        if (city == null || city.isBlank()) {
+        if (city == null) {
             throw new IllegalArgumentException("Cidade é obrigatória");
         }
-        if (state == null || state.isBlank()) {
-            throw new IllegalArgumentException("Estado é obrigatório");
+        if (!city.isActive()) {
+            throw new IllegalArgumentException("Não é possível criar loja em ciadade inativa");
         }
         if (phone == null || phone.isBlank()) {
             throw new IllegalArgumentException("Telefone é obrigatório");

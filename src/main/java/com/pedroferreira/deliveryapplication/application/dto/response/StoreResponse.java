@@ -18,8 +18,7 @@ public class StoreResponse {
     private Long id;
     private String name;
     private String description;
-    private String city;
-    private String state;
+    private CityResponse city;
     private String phone;
     private String email;
     private String address;
@@ -40,14 +39,13 @@ public class StoreResponse {
                 .id(store.getId())
                 .name(store.getName())
                 .description(store.getDescription())
-                .city(store.getCity())
-                .state(store.getState())
+                .city(CityResponse.fromEntity(store.getCity()))
                 .phone(store.getPhone())
                 .email(store.getEmail())
                 .address(store.getAddress())
                 .category(store.getCategory())
                 .openingTime(store.getOpeningTime())
-                .closingTime(store.getClosingTime()) // ✅ CORRIGIDO
+                .closingTime(store.getClosingTime())
                 .deliveryFeePerKM(store.getDeliveryFeePerKm())
                 .baseDeliveryFee(store.getBaseDeliveryFee())
                 .minimumOrder(store.getMinimumOrder())

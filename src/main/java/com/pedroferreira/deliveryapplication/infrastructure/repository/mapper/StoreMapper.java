@@ -7,6 +7,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class StoreMapper {
 
+    private final CityMapper cityMapper;
+    private final AdminMapper adminMapper;
+
+    public StoreMapper(CityMapper cityMapper, AdminMapper adminMapper) {
+        this.cityMapper = cityMapper;
+        this.adminMapper = adminMapper;
+    }
+
     public Store toDomain(StoreJpaEntity jpaEntity) {
         if (jpaEntity == null) return null;
 
@@ -14,8 +22,7 @@ public class StoreMapper {
                 .id(jpaEntity.getId())
                 .name(jpaEntity.getName())
                 .description(jpaEntity.getDescription())
-                .city(jpaEntity.getCity())
-                .state(jpaEntity.getState())
+                .city(cityMapper.toDomain(jpaEntity.getCity()))
                 .totalSales(jpaEntity.getTotalSales())
                 .phone(jpaEntity.getPhone())
                 .email(jpaEntity.getEmail())
@@ -30,6 +37,8 @@ public class StoreMapper {
                 .open(jpaEntity.getOpen())
                 .rating(jpaEntity.getRating())
                 .totalRatings(jpaEntity.getTotalRatings())
+                .createdBy(jpaEntity.getCreatedBy() != null ?
+                        adminMapper.toDomain(jpaEntity.getCreatedBy()) : null)
                 .build();
     }
 
@@ -40,8 +49,7 @@ public class StoreMapper {
                 .id(domain.getId())
                 .name(domain.getName())
                 .description(domain.getDescription())
-                .city(domain.getCity())
-                .state(domain.getState())
+                .city(cityMapper.toJpaEntity(domain.getCity()))
                 .totalSales(domain.getTotalSales())
                 .phone(domain.getPhone())
                 .email(domain.getEmail())
@@ -56,6 +64,8 @@ public class StoreMapper {
                 .open(domain.getOpen())
                 .rating(domain.getRating())
                 .totalRatings(domain.getTotalRatings())
+                .createdBy(domain.getCreatedBy() != null ?
+                        adminMapper.toJpaEntity(domain.getCreatedBy()) : null)
                 .build();
     }
 }

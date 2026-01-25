@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SellerApplicationRequest {
 
-    @NotNull(message = "ID do cliente é obrigatório") // ✅ CORRIGIDO typo "onrigatório"
+    @NotNull(message = "ID do cliente é obrigatório")
     private Long customerId;
 
     @NotBlank(message = "Nome da loja proposta é obrigatório")
@@ -28,11 +28,8 @@ public class SellerApplicationRequest {
     @NotBlank(message = "Endereço da loja é obrigatório")
     private String storeAddress;
 
-    @NotBlank(message = "Cidade é obrigatória")
-    private String city;
-
-    @NotBlank(message = "Estado é obrigatório")
-    private String state;
+    @NotBlank(message = "ID da cidade é obrigatório")
+    private Long cityId;
 
     @NotBlank(message = "Telefone comercial é obrigatório")
     private String businessPhone;

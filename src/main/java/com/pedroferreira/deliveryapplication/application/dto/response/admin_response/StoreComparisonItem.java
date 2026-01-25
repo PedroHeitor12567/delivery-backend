@@ -14,7 +14,9 @@ import java.math.BigDecimal;
 public class StoreComparisonItem {
     private Long storeId;
     private String storeName;
+    private Long cityId;
     private String cityName;
+    private String state;
     private Integer totalOrders;
     private BigDecimal totalRevenue;
     private BigDecimal platformFee;

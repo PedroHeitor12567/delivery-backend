@@ -6,6 +6,7 @@ import com.pedroferreira.deliveryapplication.application.dto.requests.CreateStor
 import com.pedroferreira.deliveryapplication.application.dto.response.*;
 import com.pedroferreira.deliveryapplication.application.dto.response.admin_response.*;
 import com.pedroferreira.deliveryapplication.application.usecase.BusinessException;
+import com.pedroferreira.deliveryapplication.application.usecase.ResourceNotFoundException;
 import com.pedroferreira.deliveryapplication.domain.entity.*;
 import com.pedroferreira.deliveryapplication.domain.enuns.StatusOrder;
 import com.pedroferreira.deliveryapplication.domain.repository.*;
@@ -47,11 +48,19 @@ public class AdminService {
 
         Admin admin = findAdminById(request.getAdminId());
 
+        City city = cityRepository.findByNameAndState(
+                request.getStoreData().getName(),
+                null // Você precisa adicionar state no DTO se quiser validar
+        ).orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada"));
+
+        if (!city.isActive()) {
+            throw new BusinessException("Não é possível criar loja em cidade inativa");
+        }
+
         Store store = Store.builder()
                 .name(request.getStoreData().getName())
                 .description(request.getStoreData().getDescription())
-                .city(request.getStoreData().getCity())
-                .state(request.getStoreData().getState())
+                .city(city)
                 .phone(request.getStoreData().getPhone())
                 .email(request.getStoreData().getEmail())
                 .address(request.getStoreData().getAddress())
@@ -156,7 +165,7 @@ public class AdminService {
                 ? BigDecimal.ZERO
                 : platformFee.divide(BigDecimal.valueOf(completedOrders.size()), 2, RoundingMode.HALF_UP);
 
-        log.info("Receita da plataforma calculada: R$ {} (4% de R$ {})", platformFee, totalSalesValue
+        log.info("Receita da plataforma calculada: R$ {} (8% de R$ {})", platformFee, totalSalesValue
         );
 
         return PlatformRevenueResponse.builder()
@@ -226,16 +235,21 @@ public class AdminService {
             throw new IllegalStateException("Admin não tem permissão para criar lojas");
         }
 
-        // Validar email único
         if (storeRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new IllegalArgumentException("Email já cadastrado");
+        }
+
+        City city = cityRepository.findById(request.getCity_id())
+                .orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada"));
+
+        if (!city.isActive()) {
+            throw new BusinessException("Não é possível criar loja em cidade inativa");
         }
 
         Store store = Store.builder()
                 .name(request.getName())
                 .description(request.getDescription())
-                .city(request.getCity())
-                .state(request.getState())
+                .city(city)
                 .phone(request.getPhone())
                 .email(request.getEmail())
                 .address(request.getAddress())
@@ -267,34 +281,6 @@ public class AdminService {
                 .thisMonth(getPeriodStats(startOfMonth, now))
                 .topStores(getTopStores(10))
                 .ordersByStatus(getOrdersByStatus())
-                .build();
-    }
-
-    @Transactional(readOnly = true)
-    public SystemStatsResponse getSystemStats() {
-        Long totalCustomers = customerRepository.count();
-        Long totalSellers = sellerRepository.count();
-        Long totalAdmins = adminRepository.count();
-        Long totalStores = storeRepository.count();
-        Long activeStores = (long) storeRepository.findByActiveTrue().size();
-        Long totalProducts = productRepository.count();
-        Long availableProducts = productRepository.countByAvailableTrue();
-        Long totalOrders = orderRepository.count();
-
-        LocalDateTime startOfToday = LocalDateTime.now().toLocalDate().atStartOfDay();
-        Long ordersToday = orderRepository.countByCreatedAtAfter(startOfToday);
-
-        return SystemStatsResponse.builder()
-                .totalUsers(totalCustomers + totalSellers + totalAdmins)
-                .totalCustomers(totalCustomers)
-                .totalSellers(totalSellers)
-                .totalAdmins(totalAdmins)
-                .totalStores(totalStores)
-                .activeStores(activeStores)
-                .totalProducts(totalProducts)
-                .availableProducts(availableProducts)
-                .totalOrders(totalOrders)
-                .ordersToday(ordersToday)
                 .build();
     }
 
@@ -494,7 +480,7 @@ public class AdminService {
                     .customerPhone(order.getCustomer().getPhone())
                     .storeName(order.getStore().getName())
                     .storeCategory(order.getStore().getCategory())
-                    .cityName(order.getStore().getCity())
+                    .cityName(order.getStore().getCity().getName())
                     .deliveryAddress(order.getDeliveryAddress())
                     .totalAmount(order.getTotalAmount())
                     .deliveryFee(order.getDeliveryFee())
@@ -529,7 +515,7 @@ public class AdminService {
                     : totalRevenue.divide(BigDecimal.valueOf(cityOrders.size()), 2, RoundingMode.HALF_UP);
 
             return SalesByCityResponse.builder()
-                    .cityName(city.getName())
+                    .cityId(city.getId())
                     .state(city.getState())
                     .totalStores(cityStores.size())
                     .totalOrders(cityOrders.size())
@@ -563,7 +549,7 @@ public class AdminService {
                 : totalRevenue.divide(BigDecimal.valueOf(cityOrders.size()), 2, RoundingMode.HALF_UP);
 
         SalesByCityResponse response = SalesByCityResponse.builder()
-                .cityName(city.getName())
+                .cityId(city.getId())
                 .state(city.getState())
                 .totalStores(cityStores.size())
                 .totalOrders(cityOrders.size())
@@ -594,7 +580,7 @@ public class AdminService {
                     return StoreComparisonItem.builder()
                             .storeId(store.getId())
                             .storeName(store.getName())
-                            .cityName(store.getCity())
+                            .cityName(store.getCity().getName())
                             .totalOrders(storeOrders.size())
                             .totalRevenue(totalRevenue)
                             .platformFee(platformFee)
@@ -667,5 +653,33 @@ public class AdminService {
     private Store findStoreById(Long storeId) {
         return storeRepository.findById(storeId)
                 .orElseThrow(() -> new BusinessException("Loja não encontrada"));
+    }
+
+    @Transactional(readOnly = true)
+    public SystemStatsResponse getSystemStats() {
+        Long totalCustomers = customerRepository.count();
+        Long totalSellers = sellerRepository.count();
+        Long totalAdmins = adminRepository.count();
+        Long totalStores = storeRepository.count();
+        Long activeStores = (long) storeRepository.findByActiveTrue().size();
+        Long totalProducts = productRepository.count();
+        Long availableProducts = productRepository.countByAvailableTrue();
+        Long totalOrders = orderRepository.count();
+
+        LocalDateTime startOfToday = LocalDateTime.now().toLocalDate().atStartOfDay();
+        Long ordersToday = orderRepository.countByCreatedAtAfter(startOfToday);
+
+        return SystemStatsResponse.builder()
+                .totalUsers(totalCustomers + totalSellers + totalAdmins)
+                .totalCustomers(totalCustomers)
+                .totalSellers(totalSellers)
+                .totalAdmins(totalAdmins)
+                .totalStores(totalStores)
+                .activeStores(activeStores)
+                .totalProducts(totalProducts)
+                .availableProducts(availableProducts)
+                .totalOrders(totalOrders)
+                .ordersToday(ordersToday)
+                .build();
     }
 }

@@ -3,6 +3,8 @@ package com.pedroferreira.deliveryapplication.presentation.controller;
 import com.pedroferreira.deliveryapplication.application.dto.requests.CreateStoreRequest;
 import com.pedroferreira.deliveryapplication.application.dto.response.StoreResponse;
 import com.pedroferreira.deliveryapplication.application.service.StoreService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +49,30 @@ public class StoreContoller {
     public ResponseEntity<List<StoreResponse>> getOpenStores() {
         log.info("GET /api/stores/open - Listando lojas abertas");
         List<StoreResponse> stores = storeService.getOpenStores();
+        return ResponseEntity.ok(stores);
+    }
+
+    @GetMapping("/city/{cityId}")
+    @Operation(
+            summary = "Listar lojas por cidade",
+            description = "Usuário primeiro seleciona cidade, depois vê as lojas disponíveis nela"
+    )
+    public ResponseEntity<List<StoreResponse>> getStoresByCity(
+            @Parameter(description = "ID da cidade") @PathVariable Long cityId) {
+        log.info("GET /api/stores/city/{} - Buscando lojas da cidade", cityId);
+        List<StoreResponse> stores = storeService.getStoresByCity(cityId);
+        return ResponseEntity.ok(stores);
+    }
+
+    @GetMapping("/city/{cityId}/open")
+    @Operation(
+            summary = "Listar lojas abertas em uma cidade",
+            description = "Retorna apenas lojas ativas e abertas em uma cidade específica"
+    )
+    public ResponseEntity<List<StoreResponse>> getOpenStoresByCity(
+            @Parameter(description = "ID da cidade") @PathVariable Long cityId) {
+        log.info("GET /api/stores/city/{}/open - Buscando lojas abertas da cidade", cityId);
+        List<StoreResponse> stores = storeService.getOpenStoresByCity(cityId);
         return ResponseEntity.ok(stores);
     }
 

@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SalesByCityResponse {
-    private String cityName;
+    private Long cityId;
     private String state;
     private Integer totalStores;
     private Integer totalOrders;

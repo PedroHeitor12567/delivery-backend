@@ -22,11 +22,8 @@ public class CreateStoreRequest {
 
     private String description;
 
-    @NotBlank(message = "Cidade é obrigatória")
-    private String city;
-
-    @NotBlank(message = "Estado é obrigatório")
-    private String state;
+    @NotBlank(message = "ID da loja é obrigatório")
+    private Long city_id;
 
     @NotBlank(message = "Telefone é obrigatório")
     private String phone;

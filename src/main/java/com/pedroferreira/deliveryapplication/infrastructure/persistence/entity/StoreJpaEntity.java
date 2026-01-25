@@ -31,22 +31,23 @@ public class StoreJpaEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(nullable = false)
-    private String city;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "city_id", nullable = false)
+    private CityJpaEntity city;
 
-    @Column(nullable = false)
-    private String state;
-
-    @OneToMany(mappedBy = "store")
+    @OneToMany(mappedBy = "store", fetch = FetchType.LAZY)
+    @Builder.Default
     private List<ProductJpaEntity> products = new ArrayList<>();
 
-    @OneToMany(mappedBy = "store")
+    @OneToMany(mappedBy = "store", fetch = FetchType.LAZY)
+    @Builder.Default
     private List<OrderJpaEntity> orders = new ArrayList<>();
 
     @Column(name = "total_sales")
+    @Builder.Default
     private Integer totalSales = 0;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private String phone;
 
     @Column(nullable = false, unique = true)
