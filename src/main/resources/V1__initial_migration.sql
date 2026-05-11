@@ -11,28 +11,54 @@ CREATE INDEX idx_cities_state ON cities(state);
 
 
 CREATE TABLE IF NOT EXISTS admins (
-    id BIGSERIAL PRIMARY KEY,
-    username VARCHAR(100) NOT NULL,
-    email VARCHAR(150) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    cpf VARCHAR(11) NOT NULL UNIQUE,
-    phone VARCHAR(20) NOT NULL,
-    address VARCHAR(300) NOT NULL,
-    active BOOLEAN NOT NULL DEFAULT true,
-    role VARCHAR(20) NOT NULL DEFAULT 'ADMIN',
-    full_access BOOLEAN DEFAULT true,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP,
+                                      id BIGSERIAL PRIMARY KEY,
+                                      username VARCHAR(100) NOT NULL,
+                                      email VARCHAR(150) NOT NULL UNIQUE,
+                                      password VARCHAR(255) NOT NULL,
+                                      cpf VARCHAR(11) NOT NULL UNIQUE,
+                                      phone VARCHAR(20) NOT NULL,
+                                      address VARCHAR(300) NOT NULL,
+                                      active BOOLEAN NOT NULL DEFAULT true,
+                                      role VARCHAR(20) NOT NULL DEFAULT 'ADMIN',
+                                      full_access BOOLEAN DEFAULT true,
+                                      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                      last_login TIMESTAMP,
 
+                                      created_by VARCHAR(100),
+                                      updated_at TIMESTAMP,
+                                      updated_by VARCHAR(100)
+);
 
-    created_by VARCHAR(100),
-    updated_at TIMESTAMP,
-    updated_by VARCHAR(100)
-    );
+CREATE INDEX IF NOT EXISTS idx_admins_email ON admins(email);
+CREATE INDEX IF NOT EXISTS idx_admins_active ON admins(active);
 
-CREATE INDEX idx_admins_email ON admins(email);
-CREATE INDEX idx_admins_active ON admins(active);
-
+-- Criar admin padrão caso não exista nenhum
+INSERT INTO admins (
+    username,
+    email,
+    password,
+    cpf,
+    phone,
+    address,
+    active,
+    role,
+    full_access,
+    created_by
+)
+SELECT
+    'admin',
+    'admin@email.com',
+    'admin123', -- senha: admin123
+    '00000000000',
+    '84999999999',
+    'Endereço padrão',
+    true,
+    'ADMIN',
+    true,
+    'SYSTEM'
+WHERE NOT EXISTS (
+    SELECT 1 FROM admins
+);
 
 CREATE TABLE IF NOT EXISTS customers (
     id BIGSERIAL PRIMARY KEY,

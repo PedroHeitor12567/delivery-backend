@@ -36,43 +36,12 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
                 .authorizeHttpRequests(auth -> auth
-                        // Endopints públicos
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/customers/register").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/actuator/health").permitAll()
-
-                        //Endopoints públicos de consulta
-                        .requestMatchers(HttpMethod.GET, "/api/cities/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/stores/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-
-                        // Endpoints restrito ADMINS
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/cities/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/cities/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/cities/**").hasRole("ADMIN")
-
-                        // Endpoints restrito SELLERS
-                        .requestMatchers(HttpMethod.POST, "/api/stores").hasAnyRole("SELLER", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/stores/**").hasAnyRole("SELLER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/products/**").hasRole("SELLER")
-                        .requestMatchers(HttpMethod.PUT, "/api/products/**").hasRole("SELLER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").hasRole("SELLER")
-
-                        // Endpoints restritos CUSTOMERS
-                        .requestMatchers("/api/orders/**").hasAnyRole("CUSTOMER", "SELLER", "ADMIN")
-                        .requestMatchers("/api/addresses/**").hasRole("CUSTOMER")
-
-                        // O resto precisa de autenticação
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
 
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
 
                 .headers(headers ->
                         headers.frameOptions(frameOptions -> frameOptions.disable())
@@ -108,4 +77,3 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
-
